@@ -1,0 +1,55 @@
+﻿@page "/quotes"
+@using TestApp.Models
+@using TestApp.Services
+@inject QuoteService QuoteService
+
+<PageTitle>Quotes</PageTitle>
+
+<h1>Quote Management</h1>
+
+<div class="row">
+    <div class="col-12">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var quote in quotes)
+                {
+                    <tr>
+                        <td>@quote.Id</td>
+                        <td>@quote.CustomerName</td>
+                        <td>@quote.ProductName</td>
+                        <td>@quote.UnitPrice.ToString("C")</td>
+                        <td>@quote.Quantity</td>
+                        <td>@quote.TotalPrice.ToString("C")</td>
+                        <td>@quote.Status</td>
+                        <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
+                        <td>
+                            <!-- TODO: Add Edit and Delete buttons -->
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<Quote> quotes = new List<Quote>();
+
+    protected override void OnInitialized()
+    {
+        quotes = QuoteService.GetAllQuotes();
+    }
+}

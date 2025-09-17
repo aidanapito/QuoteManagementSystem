@@ -1,0 +1,30 @@
+﻿using TestApp.Models;
+
+namespace TestApp.Services
+{
+    public class QuoteService
+    {
+        private List<Quote> _quotes = new List<Quote>
+        {
+            new Quote { Id = 1, CustomerName = "Acme Corp", ProductName = "Widget A", UnitPrice = 25.00m, Quantity = 10, CreatedDate = DateTime.Now.AddDays(-5), Status = "Draft" },
+            new Quote { Id = 2, CustomerName = "Tech Solutions", ProductName = "Widget B", UnitPrice = 45.50m, Quantity = 5, CreatedDate = DateTime.Now.AddDays(-3), Status = "Pending" },
+            new Quote { Id = 3, CustomerName = "Global Industries", ProductName = "Widget C", UnitPrice = 15.75m, Quantity = 20, CreatedDate = DateTime.Now.AddDays(-1), Status = "Approved" },
+            new Quote { Id = 4, CustomerName = "StartUp Inc", ProductName = "Widget D", UnitPrice = 35.25m, Quantity = 8, CreatedDate = DateTime.Now.AddDays(-2), Status = "Draft" }
+        };
+
+        public List<Quote> GetAllQuotes()
+        {
+            return _quotes;
+        }
+
+        public Quote? GetQuoteById(int id)
+        {
+            return _quotes.FirstOrDefault(q => q.Id == id);
+        }
+
+        // TODO: Implement the following methods
+        // public void UpdateQuote(Quote quote) { }
+        // public void DeleteQuote(int id) { }
+        // public void AddQuote(Quote quote) { }
+    }
+}

@@ -1,0 +1,146 @@
+﻿@page "/"
+
+<PageTitle>Quote Management Challenge</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="jumbotron bg-primary text-white p-4 rounded mb-4">
+                <h1 class="display-4">Quote Management System Challenge</h1>
+                <p class="lead">Welcome to the Inofast Coding Challenge</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <h2>Your Mission</h2>
+            <p class="fs-5">
+                Build a functional quote management system that allows users to view, edit, and manage customer quotes.
+                This challenge will test your skills with <strong>Blazor Server</strong>, <strong>.NET 8</strong>, and modern web development practices.
+            </p>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Core Requirements</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    ✅ <strong>Edit Functionality</strong><br>
+                                    <small class="text-muted">Implement inline editing or modal forms</small>
+                                </li>
+                                <li class="mb-2">
+                                    ✅ <strong>Save Changes</strong><br>
+                                    <small class="text-muted">Persist edits in memory using QuoteService</small>
+                                </li>
+                                <li class="mb-2">
+                                    ✅ <strong>Data Validation</strong><br>
+                                    <small class="text-muted">Ensure required fields and valid numeric values</small>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    ✅ <strong>Real-time Calculations</strong><br>
+                                    <small class="text-muted">Auto-update TotalPrice when values change</small>
+                                </li>
+                                <li class="mb-2">
+                                    ✅ <strong>Status Management</strong><br>
+                                    <small class="text-muted">Allow changing between Draft, Pending, Approved, Rejected</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <h4 class="alert-heading">Bonus Points</h4>
+                <p class="mb-0">
+                    <strong>Add new quotes</strong> • <strong>Delete with confirmation</strong> •
+                    <strong>Search/Filter functionality</strong> • <strong>Responsive design</strong> •
+                    <strong>Advanced validation messages</strong>
+                </p>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="/quotes" class="btn btn-primary btn-lg me-md-2">
+                    Quotes Page
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Challenge Info</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Due:</strong> 9/26/2025 by Midnight</p>
+                    <p><strong>Technologies:</strong> Blazor Server, .NET 8, Bootstrap</p>
+                    <p><strong>Sample Data:</strong> 4 pre-loaded quotes provided</p>
+                    <p><strong>Storage:</strong> In-memory (no database required)</p>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Evaluation Criteria</h4>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <ul class="mb-0">
+                            <li>Functionality & Requirements</li>
+                            <li>Code Quality & Structure</li>
+                            <li>Blazor Best Practices</li>
+                            <li>Error Handling</li>
+                            <li>User Experience</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4" id="tips-section" style="display: none;">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning">
+                    <h3 class="card-title mb-0">Development Tips</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Blazor Concepts to Use:</h5>
+                            <ul>
+                                <li><code>@@bind</code> for two-way data binding</li>
+                                <li><code>@@onclick</code> for button events</li>
+                                <li><code>@@onchange</code> for input changes</li>
+                                <li><code>EditForm</code> and <code>EditContext</code> for validation</li>
+                                <li><code>StateHasChanged()</code> to refresh UI</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Getting Started:</h5>
+                            <ol>
+                                <li>Examine the existing Quote model and service</li>
+                                <li>Start with basic edit functionality</li>
+                                <li>Add validation step by step</li>
+                                <li>Test frequently as you build</li>
+                                <li>Focus on user experience</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Component code here if needed
+}

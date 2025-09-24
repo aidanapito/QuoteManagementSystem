@@ -1,4 +1,5 @@
 ﻿@page "/quotes"
+@rendermode InteractiveServer
 @using TestApp.Models
 @using TestApp.Services
 @inject QuoteService QuoteService
@@ -24,20 +25,53 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var quote in quotes)
+                @foreach (Quote quote in quotes)
                 {
                     <tr>
-                        <td>@quote.Id</td>
-                        <td>@quote.CustomerName</td>
-                        <td>@quote.ProductName</td>
-                        <td>@quote.UnitPrice.ToString("C")</td>
-                        <td>@quote.Quantity</td>
-                        <td>@quote.TotalPrice.ToString("C")</td>
-                        <td>@quote.Status</td>
-                        <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
-                        <td>
-                            <!-- TODO: Add Edit and Delete buttons -->
-                        </td>
+                        @if (editingId == quote.Id)
+                        {
+                            <td>@quote.Id</td>
+                            <td> <input class="form-control" @bind="draft!.CustomerName" /> </td>
+                            <td> <input class="form-control" @bind="draft!.ProductName" /> </td>
+                            <td> <input type="number" step="0.01" class="form-control" @bind="draft!.UnitPrice" /> </td>
+                            <td> <input type="number" class="form-control" @bind="draft!.Quantity" /> </td>
+
+                            <td>@((draft!.UnitPrice * draft!.Quantity).ToString("C"))</td> @* generate total price *@
+
+                            <td>
+                                <select class="form-select" @bind="draft!.Status">
+                                    <option>Draft</option>
+                                    <option>Pending</option>
+                                    <option>Approved</option>
+                                    <option>Rejected</option>
+                                </select>
+                            </td>
+                            <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
+                            <td>
+                                <button class="btn btn-sm btn alert-primary me-2" @onclick="SaveEdit">Save</button>
+                                <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>@quote.Id</td>
+                            <td>@quote.CustomerName</td>
+                            <td>@quote.ProductName</td>
+                            <td>@quote.UnitPrice.ToString("C")</td>
+                            <td>@quote.Quantity</td>
+                            <td>@quote.TotalPrice.ToString("C")</td>
+                            <td>@quote.Status</td>
+                            <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
+                            <td>
+                                <!-- TODO: Add Edit and Delete buttons -->
+
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)"> Edit</button>
+                                <!-- Need delete button here as well-->
+                            </td>
+                            
+
+                        }
+
                     </tr>
                 }
             </tbody>
@@ -47,9 +81,49 @@
 
 @code {
     private List<Quote> quotes = new List<Quote>();
+    private int? editingId;
+    private Quote? draft;
 
     protected override void OnInitialized()
     {
         quotes = QuoteService.GetAllQuotes();
+    }
+
+    private void BeginEdit(Quote quote)
+    {
+        editingId = quote.Id;
+        draft = new Quote
+            {
+                Id = quote.Id,
+                CustomerName = quote.CustomerName,
+                ProductName = quote.ProductName,
+                UnitPrice = quote.UnitPrice,
+                Quantity = quote.Quantity,
+                CreatedDate = quote.CreatedDate,
+                Status = quote.Status
+            };
+    }
+
+    private void CancelEdit()
+    {
+        //cancel = null
+        editingId = null;
+        draft = null;
+    }
+
+    private void SaveEdit()
+    {
+        if (editingId is null || draft is null) return;
+
+        var original = quotes.FirstOrDefault(q => q.Id == editingId.Value);
+        if (original is null) return;
+        original.CustomerName = draft.CustomerName;
+        original.ProductName = draft.ProductName;
+        original.UnitPrice = draft.UnitPrice;
+        original.Quantity = draft.Quantity;
+        original.Status = draft.Status;
+
+        CancelEdit();
+
     }
 }

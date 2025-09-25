@@ -36,7 +36,7 @@
                             <td> <input type="number" step="0.01" class="form-control" @bind="draft!.UnitPrice" /> </td>
                             <td> <input type="number" class="form-control" @bind="draft!.Quantity" /> </td>
 
-                            <td>@((draft!.UnitPrice * draft!.Quantity).ToString("C"))</td> @* generate total price *@
+                            <td>@((draft!.UnitPrice * draft!.Quantity).ToString("C"))</td> // generate total price 
 
                             <td>
                                 <select class="form-select" @bind="draft!.Status">
@@ -115,15 +115,12 @@
     {
         if (editingId is null || draft is null) return;
 
-        var original = quotes.FirstOrDefault(q => q.Id == editingId.Value);
-        if (original is null) return;
-        original.CustomerName = draft.CustomerName;
-        original.ProductName = draft.ProductName;
-        original.UnitPrice = draft.UnitPrice;
-        original.Quantity = draft.Quantity;
-        original.Status = draft.Status;
+        // Persist changes using the service
+        QuoteService.UpdateQuote(draft);
+        
+        // Refresh the local quotes list to reflect changes
+        quotes = QuoteService.GetAllQuotes();
 
         CancelEdit();
-
     }
 }

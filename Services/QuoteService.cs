@@ -4,7 +4,7 @@ namespace TestApp.Services
 {
     public class QuoteService
     {
-        private List<Quote> _quotes = new List<Quote>
+        private static List<Quote> _quotes = new List<Quote>
         {
             new Quote { Id = 1, CustomerName = "Acme Corp", ProductName = "Widget A", UnitPrice = 25.00m, Quantity = 10, CreatedDate = DateTime.Now.AddDays(-5), Status = "Draft" },
             new Quote { Id = 2, CustomerName = "Tech Solutions", ProductName = "Widget B", UnitPrice = 45.50m, Quantity = 5, CreatedDate = DateTime.Now.AddDays(-3), Status = "Pending" },
@@ -22,8 +22,21 @@ namespace TestApp.Services
             return _quotes.FirstOrDefault(q => q.Id == id);
         }
 
+        public void UpdateQuote(Quote updatedQuote)
+        {
+            var existingQuote = _quotes.FirstOrDefault(q => q.Id == updatedQuote.Id);
+            if (existingQuote != null)
+            {
+                existingQuote.CustomerName = updatedQuote.CustomerName;
+                existingQuote.ProductName = updatedQuote.ProductName;
+                existingQuote.UnitPrice = updatedQuote.UnitPrice;
+                existingQuote.Quantity = updatedQuote.Quantity;
+                existingQuote.Status = updatedQuote.Status;
+                // Note: CreatedDate and Id are not updated to maintain data integrity
+            }
+        }
+
         // TODO: Implement the following methods
-        // public void UpdateQuote(Quote quote) { }
         // public void DeleteQuote(int id) { }
         // public void AddQuote(Quote quote) { }
     }

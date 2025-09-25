@@ -11,7 +11,22 @@
 <h1>Quote Management</h1>
 
 <div class="row mb-3">
-    <div class="col-12">
+    <div class="col-md-8">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Search by customer, product, or status..." 
+                   @bind="SearchTerm" @bind:event="oninput" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="btn btn-outline-danger" type="button" @onclick="ClearSearch" title="Clear search">
+                    <i class="bi bi-x-circle-fill"></i> Clear
+                </button>
+            }
+        </div>
+    </div>
+    <div class="col-md-4 text-end">
         <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
             <i class="bi bi-plus-circle"></i> Add New Quote
         </button>
@@ -85,7 +100,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (Quote quote in quotes)
+                @foreach (Quote quote in filteredQuotes)
                 {
                     <tr>
                         @if (editingId == quote.Id)
@@ -143,10 +158,46 @@
     private Quote? draft;
     private bool isAddingNew = false;
     private Quote? newQuote;
+    private string searchTerm = "";
+    private List<Quote> filteredQuotes = new List<Quote>();
+
+    private string SearchTerm
+    {
+        get => searchTerm;
+        set
+        {
+            searchTerm = value;
+            FilterQuotes();
+        }
+    }
 
     protected override void OnInitialized()
     {
         quotes = QuoteService.GetAllQuotes();
+        FilterQuotes();
+    }
+
+    private void FilterQuotes()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredQuotes = quotes.ToList();
+        }
+        else
+        {
+            var term = searchTerm.ToLowerInvariant();
+            filteredQuotes = quotes.Where(q => 
+                q.CustomerName.ToLowerInvariant().Contains(term) ||
+                q.ProductName.ToLowerInvariant().Contains(term) ||
+                q.Status.ToLowerInvariant().Contains(term)
+            ).ToList();
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchTerm = "";
+        FilterQuotes();
     }
 
     private void BeginEdit(Quote quote)
@@ -186,6 +237,7 @@
         
         // Refresh the local quotes list to reflect changes
         quotes = QuoteService.GetAllQuotes();
+        FilterQuotes();
 
         CancelEdit();
     }
@@ -257,6 +309,7 @@
         
         // Refresh the local quotes list to reflect changes
         quotes = QuoteService.GetAllQuotes();
+        FilterQuotes();
         
         // If we were editing this quote, cancel edit mode
         if (editingId == id)
@@ -290,6 +343,7 @@
 
         QuoteService.AddQuote(newQuote);
         quotes = QuoteService.GetAllQuotes();
+        FilterQuotes();
         CancelAddNew();
     }
 

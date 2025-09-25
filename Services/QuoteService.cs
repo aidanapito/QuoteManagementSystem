@@ -45,7 +45,17 @@ namespace TestApp.Services
             }
         }
 
+        public void AddQuote(Quote newQuote)
+        {
+            // Generate next available ID
+            var maxId = _quotes.Count > 0 ? _quotes.Max(q => q.Id) : 0;
+            newQuote.Id = maxId + 1;
+            newQuote.CreatedDate = DateTime.Now;
+            
+            _quotes.Add(newQuote);
+        }
+
         // TODO: Implement the following methods
-        // public void AddQuote(Quote quote) { }
+        // (All methods now implemented)
     }
 }

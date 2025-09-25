@@ -10,6 +10,64 @@
 
 <h1>Quote Management</h1>
 
+<div class="row mb-3">
+    <div class="col-12">
+        <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
+            <i class="bi bi-plus-circle"></i> Add New Quote
+        </button>
+    </div>
+</div>
+
+@if (isAddingNew)
+{
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Add New Quote</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer Name</label>
+                            <input class="form-control @(IsNewCustomerNameValid() ? "" : "is-invalid")" @bind="newQuote!.CustomerName" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Product Name</label>
+                            <input class="form-control @(IsNewProductNameValid() ? "" : "is-invalid")" @bind="newQuote!.ProductName" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Unit Price</label>
+                            <input type="number" step="0.01" class="form-control @(IsNewUnitPriceValid() ? "" : "is-invalid")" @bind="newQuote!.UnitPrice" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control @(IsNewQuantityValid() ? "" : "is-invalid")" @bind="newQuote!.Quantity" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="newQuote!.Status">
+                                <option>Draft</option>
+                                <option>Pending</option>
+                                <option>Approved</option>
+                                <option>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Total Price</label>
+                            <input class="form-control" value="@((newQuote!.UnitPrice * newQuote!.Quantity).ToString("C"))" readonly />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary me-2" @onclick="SaveNewQuote" disabled="@(!IsNewFormValid())">Save</button>
+                        <button class="btn btn-secondary" @onclick="CancelAddNew">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="row">
     <div class="col-12">
         <table class="table table-striped">
@@ -83,6 +141,8 @@
     private List<Quote> quotes = new List<Quote>();
     private int? editingId;
     private Quote? draft;
+    private bool isAddingNew = false;
+    private Quote? newQuote;
 
     protected override void OnInitialized()
     {
@@ -203,5 +263,60 @@
         {
             CancelEdit();
         }
+    }
+
+    private void BeginAddNew()
+    {
+        isAddingNew = true;
+        newQuote = new Quote
+        {
+            CustomerName = "",
+            ProductName = "",
+            UnitPrice = 0,
+            Quantity = 0,
+            Status = "Draft"
+        };
+    }
+
+    private void CancelAddNew()
+    {
+        isAddingNew = false;
+        newQuote = null;
+    }
+
+    private void SaveNewQuote()
+    {
+        if (newQuote == null || !IsNewFormValid()) return;
+
+        QuoteService.AddQuote(newQuote);
+        quotes = QuoteService.GetAllQuotes();
+        CancelAddNew();
+    }
+
+    // Validation methods for new quote form
+    private bool IsNewCustomerNameValid()
+    {
+        return newQuote != null && !string.IsNullOrWhiteSpace(newQuote.CustomerName);
+    }
+
+    private bool IsNewProductNameValid()
+    {
+        return newQuote != null && !string.IsNullOrWhiteSpace(newQuote.ProductName);
+    }
+
+    private bool IsNewUnitPriceValid()
+    {
+        return newQuote != null && newQuote.UnitPrice > 0;
+    }
+
+    private bool IsNewQuantityValid()
+    {
+        return newQuote != null && newQuote.Quantity > 0 && newQuote.Quantity % 1 == 0;
+    }
+
+    private bool IsNewFormValid()
+    {
+        return IsNewCustomerNameValid() && IsNewProductNameValid() && 
+               IsNewUnitPriceValid() && IsNewQuantityValid();
     }
 }

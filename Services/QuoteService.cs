@@ -36,8 +36,16 @@ namespace TestApp.Services
             }
         }
 
+        public void DeleteQuote(int id)
+        {
+            var quoteToRemove = _quotes.FirstOrDefault(q => q.Id == id);
+            if (quoteToRemove != null)
+            {
+                _quotes.Remove(quoteToRemove);
+            }
+        }
+
         // TODO: Implement the following methods
-        // public void DeleteQuote(int id) { }
         // public void AddQuote(Quote quote) { }
     }
 }

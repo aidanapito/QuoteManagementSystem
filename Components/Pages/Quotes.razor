@@ -33,8 +33,8 @@
                             <td>@quote.Id</td>
                             <td> <input class="form-control" @bind="draft!.CustomerName" /> </td>
                             <td> <input class="form-control" @bind="draft!.ProductName" /> </td>
-                            <td> <input type="number" step="0.01" class="form-control" @bind="draft!.UnitPrice" /> </td>
-                            <td> <input type="number" class="form-control" @bind="draft!.Quantity" /> </td>
+                            <td> <input type="number" step="0.01" class="form-control @(IsUnitPriceValid() ? "" : "is-invalid")" @bind="draft!.UnitPrice" /> </td>
+                            <td> <input type="number" class="form-control @(IsQuantityValid() ? "" : "is-invalid")" @bind="draft!.Quantity" /> </td>
 
                             <td>@((draft!.UnitPrice * draft!.Quantity).ToString("C"))</td> // generate total price 
 
@@ -48,7 +48,7 @@
                             </td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
-                                <button class="btn btn-sm btn alert-primary me-2" @onclick="SaveEdit">Save</button>
+                                <button class="btn btn-sm btn-primary me-2" @onclick="SaveEdit" disabled="@(!IsFormValid())">Save</button>
                                 <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
                             </td>
                         }
@@ -64,9 +64,8 @@
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
                                 <!-- TODO: Add Edit and Delete buttons -->
-
                                 <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)"> Edit</button>
-                                <!-- Need delete button here as well-->
+                                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => DeleteQuote(quote.Id)">Delete</button>
                             </td>
                             
 
@@ -115,6 +114,12 @@
     {
         if (editingId is null || draft is null) return;
 
+        // Validate numeric fields
+        if (!IsValidNumericFields())
+        {
+            return; // Don't save if validation fails
+        }
+
         // Persist changes using the service
         QuoteService.UpdateQuote(draft);
         
@@ -122,5 +127,54 @@
         quotes = QuoteService.GetAllQuotes();
 
         CancelEdit();
+    }
+
+    private bool IsValidNumericFields()
+    {
+        if (draft == null) return false;
+
+        // Check if UnitPrice is valid (greater than 0)
+        if (draft.UnitPrice <= 0)
+        {
+            return false;
+        }
+
+        // Check if Quantity is valid (greater than 0 and whole number)
+        if (draft.Quantity <= 0 || draft.Quantity % 1 != 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsUnitPriceValid()
+    {
+        return draft != null && draft.UnitPrice > 0;
+    }
+
+    private bool IsQuantityValid()
+    {
+        return draft != null && draft.Quantity > 0 && draft.Quantity % 1 == 0;
+    }
+
+    private bool IsFormValid()
+    {
+        return IsUnitPriceValid() && IsQuantityValid();
+    }
+
+    private void DeleteQuote(int id)
+    {
+        // Delete from service
+        QuoteService.DeleteQuote(id);
+        
+        // Refresh the local quotes list to reflect changes
+        quotes = QuoteService.GetAllQuotes();
+        
+        // If we were editing this quote, cancel edit mode
+        if (editingId == id)
+        {
+            CancelEdit();
+        }
     }
 }

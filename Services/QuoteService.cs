@@ -6,10 +6,10 @@ namespace TestApp.Services
     {
         private static List<Quote> _quotes = new List<Quote>
         {
-            new Quote { Id = 1, CustomerName = "Acme Corp", ProductName = "Widget A", UnitPrice = 25.00m, Quantity = 10, CreatedDate = DateTime.Now.AddDays(-5), ValidQuotePeriod = DateTime.Now.AddDays(25), Status = "Draft", Comments = "Customer requested rush delivery" },
+            new Quote { Id = 1, CustomerName = "Acme Corp", ProductName = "Widget A", UnitPrice = 25.00m, Quantity = 10, CreatedDate = DateTime.Now.AddDays(-5), ValidQuotePeriod = DateTime.Now.AddDays(5), Status = "Draft", Comments = "Customer requested rush delivery" },
             new Quote { Id = 2, CustomerName = "Tech Solutions", ProductName = "Widget B", UnitPrice = 45.50m, Quantity = 5, CreatedDate = DateTime.Now.AddDays(-3), ValidQuotePeriod = DateTime.Now.AddDays(27), Status = "Pending", Comments = "" },
             new Quote { Id = 3, CustomerName = "Global Industries", ProductName = "Widget C", UnitPrice = 15.75m, Quantity = 20, CreatedDate = DateTime.Now.AddDays(-1), ValidQuotePeriod = DateTime.Now.AddDays(29), Status = "Approved", Comments = "" },
-            new Quote { Id = 4, CustomerName = "StartUp Inc", ProductName = "Widget D", UnitPrice = 35.25m, Quantity = 8, CreatedDate = DateTime.Now.AddDays(-2), ValidQuotePeriod = DateTime.Now.AddDays(28), Status = "Draft", Comments = "" }
+            new Quote { Id = 4, CustomerName = "StartUp Inc", ProductName = "Widget D", UnitPrice = 35.25m, Quantity = 8, CreatedDate = DateTime.Now.AddDays(-2), ValidQuotePeriod = DateTime.Now.AddDays(-1), Status = "Draft", Comments = "" }
         };
 
         public List<Quote> GetAllQuotes()

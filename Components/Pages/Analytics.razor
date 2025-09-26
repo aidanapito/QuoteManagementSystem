@@ -1,0 +1,465 @@
+@page "/analytics"
+@rendermode InteractiveServer
+@using TestApp.Models
+@using TestApp.Services
+@using Microsoft.JSInterop
+@inject QuoteService QuoteService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Analytics Dashboard</PageTitle>
+
+<h1>Quote Analytics Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-graph-up"></i> Key Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3>@totalQuotes</h3>
+                                <p class="mb-0">Total Quotes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>@totalRevenue.ToString("C")</h3>
+                                <p class="mb-0">Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3>@pendingQuotes</h3>
+                                <p class="mb-0">Pending Quotes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>@uniqueCustomers</h3>
+                                <p class="mb-0">Unique Customers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-bar-chart"></i> Quotes Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="quotesOverTimeChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-pie-chart"></i> Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-people"></i> Top Customers by Revenue</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="customerRevenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-box"></i> Top Products by Quantity</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="productQuantityChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-currency-dollar"></i> Revenue Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-calendar"></i> Monthly Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Quotes</th>
+                                <th>Revenue</th>
+                                <th>Avg. Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var month in monthlyData)
+                            {
+                                <tr>
+                                    <td>@month.Month</td>
+                                    <td>@month.QuoteCount</td>
+                                    <td>@month.Revenue.ToString("C")</td>
+                                    <td>@month.AverageValue.ToString("C")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Quote> quotes = new List<Quote>();
+    private int totalQuotes;
+    private decimal totalRevenue;
+    private int pendingQuotes;
+    private int uniqueCustomers;
+    private List<MonthlyData> monthlyData = new List<MonthlyData>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        quotes = QuoteService.GetAllQuotes();
+        CalculateMetrics();
+        GenerateMonthlyData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await CreateCharts();
+        }
+    }
+
+    private void CalculateMetrics()
+    {
+        totalQuotes = quotes.Count;
+        totalRevenue = quotes.Sum(q => q.TotalPrice);
+        pendingQuotes = quotes.Count(q => q.Status == "Pending");
+        uniqueCustomers = quotes.Select(q => q.CustomerName).Distinct().Count();
+    }
+
+    private void GenerateMonthlyData()
+    {
+        var monthlyGroups = quotes
+            .GroupBy(q => new { q.CreatedDate.Year, q.CreatedDate.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .ToList();
+
+        monthlyData = monthlyGroups.Select(g => new MonthlyData
+        {
+            Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+            QuoteCount = g.Count(),
+            Revenue = g.Sum(q => q.TotalPrice),
+            AverageValue = g.Average(q => q.TotalPrice)
+        }).ToList();
+    }
+
+    private async Task CreateCharts()
+    {
+        await CreateQuotesOverTimeChart();
+        await CreateStatusChart();
+        await CreateCustomerRevenueChart();
+        await CreateProductQuantityChart();
+        await CreateRevenueChart();
+    }
+
+    private async Task CreateQuotesOverTimeChart()
+    {
+        var monthlyLabels = monthlyData.Select(m => m.Month).ToArray();
+        var monthlyCounts = monthlyData.Select(m => m.QuoteCount).ToArray();
+
+        var config = new
+        {
+            type = "line",
+            data = new
+            {
+                labels = monthlyLabels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = "Quotes Created",
+                        data = monthlyCounts,
+                        borderColor = "rgb(75, 192, 192)",
+                        backgroundColor = "rgba(75, 192, 192, 0.2)",
+                        tension = 0.1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                plugins = new
+                {
+                    title = new
+                    {
+                        display = true,
+                        text = "Quotes Created Over Time"
+                    }
+                },
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("createChart", "quotesOverTimeChart", config);
+    }
+
+    private async Task CreateStatusChart()
+    {
+        var statusGroups = quotes.GroupBy(q => q.Status).ToList();
+        var statusLabels = statusGroups.Select(g => g.Key).ToArray();
+        var statusCounts = statusGroups.Select(g => g.Count()).ToArray();
+        var colors = new[] { "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0" };
+
+        var config = new
+        {
+            type = "doughnut",
+            data = new
+            {
+                labels = statusLabels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        data = statusCounts,
+                        backgroundColor = colors.Take(statusLabels.Length).ToArray(),
+                        borderWidth = 2
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                plugins = new
+                {
+                    title = new
+                    {
+                        display = true,
+                        text = "Quote Status Distribution"
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("createChart", "statusChart", config);
+    }
+
+    private async Task CreateCustomerRevenueChart()
+    {
+        var customerGroups = quotes
+            .GroupBy(q => q.CustomerName)
+            .Select(g => new { Customer = g.Key, Revenue = g.Sum(q => q.TotalPrice) })
+            .OrderByDescending(x => x.Revenue)
+            .Take(5)
+            .ToList();
+
+        var customerLabels = customerGroups.Select(c => c.Customer).ToArray();
+        var revenueData = customerGroups.Select(c => (double)c.Revenue).ToArray();
+
+        var config = new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = customerLabels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = "Revenue",
+                        data = revenueData,
+                        backgroundColor = "rgba(54, 162, 235, 0.8)",
+                        borderColor = "rgba(54, 162, 235, 1)",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                plugins = new
+                {
+                    title = new
+                    {
+                        display = true,
+                        text = "Top Customers by Revenue"
+                    }
+                },
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true,
+                        ticks = new
+                        {
+                            callback = "function(value) { return '$' + value.toLocaleString(); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("createChart", "customerRevenueChart", config);
+    }
+
+    private async Task CreateProductQuantityChart()
+    {
+        var productGroups = quotes
+            .GroupBy(q => q.ProductName)
+            .Select(g => new { Product = g.Key, Quantity = g.Sum(q => q.Quantity) })
+            .OrderByDescending(x => x.Quantity)
+            .Take(5)
+            .ToList();
+
+        var productLabels = productGroups.Select(p => p.Product).ToArray();
+        var quantityData = productGroups.Select(p => p.Quantity).ToArray();
+
+        var config = new
+        {
+            type = "bar",
+            data = new
+            {
+                labels = productLabels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = "Quantity Sold",
+                        data = quantityData,
+                        backgroundColor = "rgba(255, 99, 132, 0.8)",
+                        borderColor = "rgba(255, 99, 132, 1)",
+                        borderWidth = 1
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                plugins = new
+                {
+                    title = new
+                    {
+                        display = true,
+                        text = "Top Products by Quantity"
+                    }
+                },
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("createChart", "productQuantityChart", config);
+    }
+
+    private async Task CreateRevenueChart()
+    {
+        var monthlyLabels = monthlyData.Select(m => m.Month).ToArray();
+        var monthlyRevenue = monthlyData.Select(m => (double)m.Revenue).ToArray();
+
+        var config = new
+        {
+            type = "line",
+            data = new
+            {
+                labels = monthlyLabels,
+                datasets = new[]
+                {
+                    new
+                    {
+                        label = "Revenue",
+                        data = monthlyRevenue,
+                        borderColor = "rgb(255, 99, 132)",
+                        backgroundColor = "rgba(255, 99, 132, 0.2)",
+                        tension = 0.1,
+                        fill = true
+                    }
+                }
+            },
+            options = new
+            {
+                responsive = true,
+                plugins = new
+                {
+                    title = new
+                    {
+                        display = true,
+                        text = "Revenue Trends"
+                    }
+                },
+                scales = new
+                {
+                    y = new
+                    {
+                        beginAtZero = true,
+                        ticks = new
+                        {
+                            callback = "function(value) { return '$' + value.toLocaleString(); }"
+                        }
+                    }
+                }
+            }
+        };
+
+        await JSRuntime.InvokeVoidAsync("createChart", "revenueChart", config);
+    }
+
+    public class MonthlyData
+    {
+        public string Month { get; set; } = "";
+        public int QuoteCount { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal AverageValue { get; set; }
+    }
+}

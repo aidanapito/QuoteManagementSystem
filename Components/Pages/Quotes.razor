@@ -2,9 +2,7 @@
 @rendermode InteractiveServer
 @using TestApp.Models
 @using TestApp.Services
-@using Microsoft.JSInterop
 @inject QuoteService QuoteService
-@inject IJSRuntime JSRuntime
 
 <PageTitle>Quotes</PageTitle>
 
@@ -272,7 +270,7 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <button class="btn btn-primary me-2" @onclick="SaveNewQuote" disabled="@(!IsNewFormValid())">
+                        <button class="btn btn-primary me-2" @onclick="ShowNewQuoteConfirmation" disabled="@(!IsNewFormValid())">
                             <i class="bi bi-check-circle"></i> Save Quote
                         </button>
                         <button class="btn btn-secondary" @onclick="CancelAddNew">
@@ -363,7 +361,7 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
+                                    <button class="btn btn-sm btn-primary" @onclick="ShowSaveConfirmation" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
                                         <i class="bi bi-check-circle"></i> Save
                                     </button>
                                     <button class="btn btn-sm btn-secondary" @onclick="CancelEdit" title="Cancel editing">
@@ -495,7 +493,7 @@
                         </div>
                         <div class="col-12">
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                <button class="btn btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
+                                <button class="btn btn-primary" @onclick="ShowSaveConfirmation" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
                                     <i class="bi bi-check-circle"></i> Save Changes
                                 </button>
                                 <button class="btn btn-secondary" @onclick="CancelEdit" title="Cancel editing">
@@ -537,6 +535,147 @@
     }
 </div>
 
+<!-- Save Confirmation Modal -->
+@if (showSaveConfirmation)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-question-circle text-warning"></i> @confirmationTitle
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p>@confirmationMessage</p>
+                    @if (draft != null)
+                    {
+                        <div class="alert alert-info">
+                            <h6>Changes to be saved:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Customer:</strong> @draft.CustomerName</li>
+                                <li><strong>Product:</strong> @draft.ProductName</li>
+                                <li><strong>Unit Price:</strong> @draft.UnitPrice.ToString("C")</li>
+                                <li><strong>Quantity:</strong> @draft.Quantity</li>
+                                <li><strong>Total:</strong> @draft.TotalPrice.ToString("C")</li>
+                                <li><strong>Status:</strong> @draft.Status</li>
+                                @if (!string.IsNullOrWhiteSpace(draft.Comments))
+                                {
+                                    <li><strong>Comments:</strong> @draft.Comments</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelSaveConfirmation">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmSaveEdit">
+                        <i class="bi bi-check-circle"></i> Yes, Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- New Quote Confirmation Modal -->
+@if (showNewQuoteConfirmation)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-question-circle text-warning"></i> @confirmationTitle
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p>@confirmationMessage</p>
+                    @if (newQuote != null)
+                    {
+                        <div class="alert alert-info">
+                            <h6>New quote details:</h6>
+                            <ul class="mb-0">
+                                <li><strong>Customer:</strong> @newQuote.CustomerName</li>
+                                <li><strong>Product:</strong> @newQuote.ProductName</li>
+                                <li><strong>Unit Price:</strong> @newQuote.UnitPrice.ToString("C")</li>
+                                <li><strong>Quantity:</strong> @newQuote.Quantity</li>
+                                <li><strong>Total:</strong> @newQuote.TotalPrice.ToString("C")</li>
+                                <li><strong>Status:</strong> @newQuote.Status</li>
+                                @if (!string.IsNullOrWhiteSpace(newQuote.Comments))
+                                {
+                                    <li><strong>Comments:</strong> @newQuote.Comments</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelNewQuoteConfirmation">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="ConfirmSaveNewQuote">
+                        <i class="bi bi-check-circle"></i> Yes, Create Quote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirmation)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle text-danger"></i> @confirmationTitle
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p>@confirmationMessage</p>
+                    @if (quoteToDelete != null)
+                    {
+                        <div class="alert alert-danger">
+                            <h6>Quote to be deleted:</h6>
+                            <ul class="mb-0">
+                                <li><strong>ID:</strong> #@quoteToDelete.Id</li>
+                                <li><strong>Customer:</strong> @quoteToDelete.CustomerName</li>
+                                <li><strong>Product:</strong> @quoteToDelete.ProductName</li>
+                                <li><strong>Unit Price:</strong> @quoteToDelete.UnitPrice.ToString("C")</li>
+                                <li><strong>Quantity:</strong> @quoteToDelete.Quantity</li>
+                                <li><strong>Total:</strong> @quoteToDelete.TotalPrice.ToString("C")</li>
+                                <li><strong>Status:</strong> @quoteToDelete.Status</li>
+                                <li><strong>Created:</strong> @quoteToDelete.CreatedDate.ToString("MM/dd/yyyy")</li>
+                                @if (!string.IsNullOrWhiteSpace(quoteToDelete.Comments))
+                                {
+                                    <li><strong>Comments:</strong> @quoteToDelete.Comments</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Warning:</strong> This action cannot be undone. The quote will be permanently deleted from the system.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelDeleteConfirmation">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteQuote">
+                        <i class="bi bi-trash"></i> Yes, Delete Quote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Quote> quotes = new List<Quote>();
     private int? editingId;
@@ -559,6 +698,14 @@
     private decimal? maxPrice;
     private int? minQuantity;
     private int? maxQuantity;
+    
+    // Confirmation dialog variables
+    private bool showSaveConfirmation = false;
+    private bool showNewQuoteConfirmation = false;
+    private bool showDeleteConfirmation = false;
+    private string confirmationMessage = "";
+    private string confirmationTitle = "";
+    private Quote? quoteToDelete;
 
     private string SearchTerm
     {
@@ -740,6 +887,75 @@
         return quotes.Select(q => q.ProductName).Distinct().OrderBy(p => p).ToList();
     }
 
+    // Confirmation dialog methods
+    private void ShowSaveConfirmation()
+    {
+        if (draft != null && editingId.HasValue)
+        {
+            var originalQuote = quotes.FirstOrDefault(q => q.Id == editingId.Value);
+            if (originalQuote != null)
+            {
+                confirmationTitle = "Confirm Save Changes";
+                confirmationMessage = $"Are you sure you want to save changes to Quote #{editingId.Value}?";
+                showSaveConfirmation = true;
+            }
+        }
+    }
+
+    private void ShowNewQuoteConfirmation()
+    {
+        if (newQuote != null)
+        {
+            confirmationTitle = "Confirm New Quote";
+            confirmationMessage = $"Are you sure you want to create a new quote for {newQuote.CustomerName}?";
+            showNewQuoteConfirmation = true;
+        }
+    }
+
+    private void CancelSaveConfirmation()
+    {
+        showSaveConfirmation = false;
+        confirmationMessage = "";
+        confirmationTitle = "";
+    }
+
+    private void CancelNewQuoteConfirmation()
+    {
+        showNewQuoteConfirmation = false;
+        confirmationMessage = "";
+        confirmationTitle = "";
+    }
+
+    private void ConfirmSaveEdit()
+    {
+        showSaveConfirmation = false;
+        SaveEdit(); // Call the original save method
+    }
+
+    private void ConfirmSaveNewQuote()
+    {
+        showNewQuoteConfirmation = false;
+        SaveNewQuote(); // Call the original save method
+    }
+
+    private void CancelDeleteConfirmation()
+    {
+        showDeleteConfirmation = false;
+        quoteToDelete = null;
+        confirmationMessage = "";
+        confirmationTitle = "";
+    }
+
+    private void ConfirmDeleteQuote()
+    {
+        if (quoteToDelete != null)
+        {
+            showDeleteConfirmation = false;
+            DeleteQuote(quoteToDelete.Id);
+            quoteToDelete = null;
+        }
+    }
+
     private void BeginEdit(Quote quote)
     {
         editingId = quote.Id;
@@ -832,14 +1048,14 @@
         return IsCustomerNameValid() && IsProductNameValid();
     }
 
-    private async Task ConfirmDelete(int id, string customerName)
+    private void ConfirmDelete(int id, string customerName)
     {
-        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", 
-            $"Are you sure you want to delete the quote for {customerName}? This action cannot be undone.");
-        
-        if (confirmed)
+        quoteToDelete = quotes.FirstOrDefault(q => q.Id == id);
+        if (quoteToDelete != null)
         {
-            DeleteQuote(id);
+            confirmationTitle = "Confirm Delete Quote";
+            confirmationMessage = $"Are you sure you want to delete the quote for {customerName}?";
+            showDeleteConfirmation = true;
         }
     }
 

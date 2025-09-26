@@ -49,3 +49,12 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* Fix Analytics icon alignment */
+.nav-link .bi-graph-up {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    line-height: 1;
+    font-size: 1rem;
+}

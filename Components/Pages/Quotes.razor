@@ -11,7 +11,7 @@
 <h1>Quote Management</h1>
 
 <div class="row mb-3">
-    <div class="col-lg-8 col-md-7 mb-2 mb-md-0">
+    <div class="col-lg-6 col-md-5 mb-2 mb-md-0">
         <div class="input-group">
             <span class="input-group-text">
                 <i class="bi bi-search"></i>
@@ -26,7 +26,26 @@
             }
         </div>
     </div>
-    <div class="col-lg-4 col-md-5 text-md-end">
+    <div class="col-lg-3 col-md-4 mb-2 mb-md-0">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-sort-down"></i>
+            </span>
+            <select class="form-select" @bind="SortBy" @bind:event="onchange">
+                <option value="date-desc">Date (Newest First)</option>
+                <option value="date-asc">Date (Oldest First)</option>
+                <option value="customer-asc">Customer (A-Z)</option>
+                <option value="customer-desc">Customer (Z-A)</option>
+                <option value="product-asc">Product (A-Z)</option>
+                <option value="product-desc">Product (Z-A)</option>
+                <option value="total-desc">Total (High to Low)</option>
+                <option value="total-asc">Total (Low to High)</option>
+                <option value="status-asc">Status (A-Z)</option>
+                <option value="status-desc">Status (Z-A)</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-3 text-md-end">
         <button class="btn btn-success w-100 w-md-auto" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
             <i class="bi bi-plus-circle"></i> Add New Quote
         </button>
@@ -242,6 +261,7 @@
     private bool isAddingNew = false;
     private Quote? newQuote;
     private string searchTerm = "";
+    private string sortBy = "date-desc";
     private List<Quote> filteredQuotes = new List<Quote>();
 
     private string SearchTerm
@@ -254,6 +274,16 @@
         }
     }
 
+    private string SortBy
+    {
+        get => sortBy;
+        set
+        {
+            sortBy = value;
+            FilterQuotes();
+        }
+    }
+
     protected override void OnInitialized()
     {
         quotes = QuoteService.GetAllQuotes();
@@ -262,6 +292,7 @@
 
     private void FilterQuotes()
     {
+        // First filter by search term
         if (string.IsNullOrWhiteSpace(searchTerm))
         {
             filteredQuotes = quotes.ToList();
@@ -275,6 +306,22 @@
                 q.Status.ToLowerInvariant().Contains(term)
             ).ToList();
         }
+
+        // Then apply sorting
+        filteredQuotes = sortBy switch
+        {
+            "date-desc" => filteredQuotes.OrderByDescending(q => q.CreatedDate).ToList(),
+            "date-asc" => filteredQuotes.OrderBy(q => q.CreatedDate).ToList(),
+            "customer-asc" => filteredQuotes.OrderBy(q => q.CustomerName).ToList(),
+            "customer-desc" => filteredQuotes.OrderByDescending(q => q.CustomerName).ToList(),
+            "product-asc" => filteredQuotes.OrderBy(q => q.ProductName).ToList(),
+            "product-desc" => filteredQuotes.OrderByDescending(q => q.ProductName).ToList(),
+            "total-desc" => filteredQuotes.OrderByDescending(q => q.TotalPrice).ToList(),
+            "total-asc" => filteredQuotes.OrderBy(q => q.TotalPrice).ToList(),
+            "status-asc" => filteredQuotes.OrderBy(q => q.Status).ToList(),
+            "status-desc" => filteredQuotes.OrderByDescending(q => q.Status).ToList(),
+            _ => filteredQuotes.OrderByDescending(q => q.CreatedDate).ToList()
+        };
     }
 
     private void ClearSearch()

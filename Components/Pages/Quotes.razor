@@ -42,16 +42,18 @@
                 <option value="total-asc">Total (Low to High)</option>
                 <option value="status-asc">Status (A-Z)</option>
                 <option value="status-desc">Status (Z-A)</option>
+                <option value="valid-desc">Valid Until (Latest First)</option>
+                <option value="valid-asc">Valid Until (Earliest First)</option>
             </select>
         </div>
     </div>
     <div class="col-lg-2 col-md-3 text-md-end">
-        <div class="d-flex gap-2 justify-content-md-end">
+        <div class="d-flex gap-2 justify-content-md-end btn-group-custom">
             <button class="btn btn-outline-secondary" @onclick="ToggleAdvancedFilters" title="Advanced Filters">
-                <i class="bi bi-funnel"></i> <span class="d-none d-sm-inline">Filters</span>
+                <i class="bi bi-funnel"></i> <span class="d-none d-xxl-inline">Filters</span>
             </button>
             <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
-                <i class="bi bi-plus-circle"></i> <span class="d-none d-sm-inline">Add Quote</span>
+                <i class="bi bi-plus-circle"></i> <span class="d-none d-xxl-inline">Add Quote</span>
             </button>
         </div>
     </div>
@@ -260,6 +262,10 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Valid Until</label>
+                            <input type="date" class="form-control" @bind="newQuote!.ValidQuotePeriod" />
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Total Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
@@ -299,6 +305,7 @@
                     <th>Total</th>
                     <th>Status</th>
                     <th>Created</th>
+                    <th>Valid Until</th>
                     <th>Comments</th>
                     <th>Actions</th>
                 </tr>
@@ -359,6 +366,9 @@
                             </td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
+                                <input type="date" class="form-control form-control-sm" @bind="draft!.ValidQuotePeriod" />
+                            </td>
+                            <td>
                                 <textarea class="form-control form-control-sm" rows="2" @bind="draft!.Comments" placeholder="Add comments..."></textarea>
                             </td>
                             <td>
@@ -382,6 +392,17 @@
                             <td>@quote.TotalPrice.ToString("C")</td>
                             <td>@quote.Status</td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
+                            <td>
+                                @{
+                                    var daysUntilExpiry = (quote.ValidQuotePeriod - DateTime.Now).Days;
+                                    var isExpired = quote.ValidQuotePeriod < DateTime.Now;
+                                    var isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+                                }
+                                <span class="@(isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-success")" 
+                                      title="@(isExpired ? "Expired" : isExpiringSoon ? "Expires soon" : "Valid")">
+                                    @quote.ValidQuotePeriod.ToString("MM/dd/yyyy")
+                                </span>
+                            </td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(quote.Comments))
                                 {
@@ -483,6 +504,10 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Valid Until</label>
+                            <input type="date" class="form-control" @bind="draft!.ValidQuotePeriod" />
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Total Price</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
@@ -514,6 +539,18 @@
                             <p class="card-text mb-1"><strong>Product:</strong> @quote.ProductName</p>
                             <p class="card-text mb-1"><strong>Price:</strong> @quote.UnitPrice.ToString("C") × @quote.Quantity = @quote.TotalPrice.ToString("C")</p>
                             <p class="card-text mb-1"><strong>Status:</strong> <span class="badge bg-secondary">@quote.Status</span></p>
+                            <p class="card-text mb-1">
+                                <strong>Valid Until:</strong> 
+                                @{
+                                    var daysUntilExpiry = (quote.ValidQuotePeriod - DateTime.Now).Days;
+                                    var isExpired = quote.ValidQuotePeriod < DateTime.Now;
+                                    var isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+                                }
+                                <span class="@(isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-success")" 
+                                      title="@(isExpired ? "Expired" : isExpiringSoon ? "Expires soon" : "Valid")">
+                                    @quote.ValidQuotePeriod.ToString("MM/dd/yyyy")
+                                </span>
+                            </p>
                             @if (!string.IsNullOrWhiteSpace(quote.Comments))
                             {
                                 <p class="card-text mb-1"><strong>Comments:</strong> <span class="text-muted">@quote.Comments</span></p>
@@ -561,6 +598,7 @@
                                 <li><strong>Quantity:</strong> @draft.Quantity</li>
                                 <li><strong>Total:</strong> @draft.TotalPrice.ToString("C")</li>
                                 <li><strong>Status:</strong> @draft.Status</li>
+                                <li><strong>Valid Until:</strong> @draft.ValidQuotePeriod.ToString("MM/dd/yyyy")</li>
                                 @if (!string.IsNullOrWhiteSpace(draft.Comments))
                                 {
                                     <li><strong>Comments:</strong> @draft.Comments</li>
@@ -606,6 +644,7 @@
                                 <li><strong>Quantity:</strong> @newQuote.Quantity</li>
                                 <li><strong>Total:</strong> @newQuote.TotalPrice.ToString("C")</li>
                                 <li><strong>Status:</strong> @newQuote.Status</li>
+                                <li><strong>Valid Until:</strong> @newQuote.ValidQuotePeriod.ToString("MM/dd/yyyy")</li>
                                 @if (!string.IsNullOrWhiteSpace(newQuote.Comments))
                                 {
                                     <li><strong>Comments:</strong> @newQuote.Comments</li>
@@ -653,6 +692,7 @@
                                 <li><strong>Total:</strong> @quoteToDelete.TotalPrice.ToString("C")</li>
                                 <li><strong>Status:</strong> @quoteToDelete.Status</li>
                                 <li><strong>Created:</strong> @quoteToDelete.CreatedDate.ToString("MM/dd/yyyy")</li>
+                                <li><strong>Valid Until:</strong> @quoteToDelete.ValidQuotePeriod.ToString("MM/dd/yyyy")</li>
                                 @if (!string.IsNullOrWhiteSpace(quoteToDelete.Comments))
                                 {
                                     <li><strong>Comments:</strong> @quoteToDelete.Comments</li>
@@ -834,6 +874,8 @@
             "total-asc" => filteredQuotes.OrderBy(q => q.TotalPrice).ToList(),
             "status-asc" => filteredQuotes.OrderBy(q => q.Status).ToList(),
             "status-desc" => filteredQuotes.OrderByDescending(q => q.Status).ToList(),
+            "valid-desc" => filteredQuotes.OrderByDescending(q => q.ValidQuotePeriod).ToList(),
+            "valid-asc" => filteredQuotes.OrderBy(q => q.ValidQuotePeriod).ToList(),
             _ => filteredQuotes.OrderBy(q => q.Id).ToList()
         };
     }
@@ -971,6 +1013,7 @@
                 UnitPrice = quote.UnitPrice,
                 Quantity = quote.Quantity,
                 CreatedDate = quote.CreatedDate,
+                ValidQuotePeriod = quote.ValidQuotePeriod,
                 Status = quote.Status,
                 Comments = quote.Comments
             };
@@ -1088,6 +1131,7 @@
             ProductName = "",
             UnitPrice = 0,
             Quantity = 0,
+            ValidQuotePeriod = DateTime.Now.AddDays(30), // Default to 30 days from now
             Status = "Draft",
             Comments = ""
         };

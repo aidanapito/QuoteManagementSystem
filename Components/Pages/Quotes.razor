@@ -9,7 +9,7 @@
 <h1>Quote Management</h1>
 
 <div class="row mb-3">
-    <div class="col-lg-6 col-md-5 mb-2 mb-md-0">
+    <div class="col-lg-8 col-md-6 mb-2 mb-md-0">
         <div class="input-group">
             <span class="input-group-text">
                 <i class="bi bi-search"></i>
@@ -24,12 +24,14 @@
             }
         </div>
     </div>
-    <div class="col-lg-3 col-md-4 mb-2 mb-md-0">
+    <div class="col-lg-2 col-md-3 mb-2 mb-md-0">
         <div class="input-group">
             <span class="input-group-text">
                 <i class="bi bi-sort-down"></i>
             </span>
             <select class="form-select" @bind="SortBy" @bind:event="onchange">
+                <option value="id-asc">ID (Low to High)</option>
+                <option value="id-desc">ID (High to Low)</option>
                 <option value="date-desc">Date (Newest First)</option>
                 <option value="date-asc">Date (Oldest First)</option>
                 <option value="customer-asc">Customer (A-Z)</option>
@@ -43,13 +45,13 @@
             </select>
         </div>
     </div>
-    <div class="col-lg-3 col-md-3 text-md-end">
+    <div class="col-lg-2 col-md-3 text-md-end">
         <div class="d-flex gap-2 justify-content-md-end">
             <button class="btn btn-outline-secondary" @onclick="ToggleAdvancedFilters" title="Advanced Filters">
                 <i class="bi bi-funnel"></i> <span class="d-none d-sm-inline">Filters</span>
             </button>
-            <button class="btn btn-success w-100 w-md-auto" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
-                <i class="bi bi-plus-circle"></i> Add New Quote
+            <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
+                <i class="bi bi-plus-circle"></i> <span class="d-none d-sm-inline">Add Quote</span>
             </button>
         </div>
     </div>
@@ -683,7 +685,7 @@
     private bool isAddingNew = false;
     private Quote? newQuote;
     private string searchTerm = "";
-    private string sortBy = "product-asc";  //default value
+    private string sortBy = "id-asc";  //default value
     private List<Quote> filteredQuotes = new List<Quote>();
     
     // Advanced filter variables
@@ -820,6 +822,8 @@
         // Apply sorting
         filteredQuotes = sortBy switch
         {
+            "id-asc" => filteredQuotes.OrderBy(q => q.Id).ToList(),
+            "id-desc" => filteredQuotes.OrderByDescending(q => q.Id).ToList(),
             "date-desc" => filteredQuotes.OrderByDescending(q => q.CreatedDate).ToList(),
             "date-asc" => filteredQuotes.OrderBy(q => q.CreatedDate).ToList(),
             "customer-asc" => filteredQuotes.OrderBy(q => q.CustomerName).ToList(),
@@ -830,7 +834,7 @@
             "total-asc" => filteredQuotes.OrderBy(q => q.TotalPrice).ToList(),
             "status-asc" => filteredQuotes.OrderBy(q => q.Status).ToList(),
             "status-desc" => filteredQuotes.OrderByDescending(q => q.Status).ToList(),
-            _ => filteredQuotes.OrderByDescending(q => q.CreatedDate).ToList()
+            _ => filteredQuotes.OrderBy(q => q.Id).ToList()
         };
     }
 

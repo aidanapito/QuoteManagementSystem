@@ -11,7 +11,7 @@
 <h1>Quote Management</h1>
 
 <div class="row mb-3">
-    <div class="col-md-8">
+    <div class="col-lg-8 col-md-7 mb-2 mb-md-0">
         <div class="input-group">
             <span class="input-group-text">
                 <i class="bi bi-search"></i>
@@ -21,13 +21,13 @@
             @if (!string.IsNullOrEmpty(searchTerm))
             {
                 <button class="btn btn-outline-danger" type="button" @onclick="ClearSearch" title="Clear search">
-                    <i class="bi bi-x-circle-fill"></i> Clear
+                    <i class="bi bi-x-circle-fill"></i> <span class="d-none d-sm-inline">Clear</span>
                 </button>
             }
         </div>
     </div>
-    <div class="col-md-4 text-end">
-        <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
+    <div class="col-lg-4 col-md-5 text-md-end">
+        <button class="btn btn-success w-100 w-md-auto" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
             <i class="bi bi-plus-circle"></i> Add New Quote
         </button>
     </div>
@@ -83,8 +83,9 @@
     </div>
 }
 
-<div class="row">
-    <div class="col-12">
+<!-- Desktop Table View -->
+<div class="d-none d-lg-block">
+    <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -123,8 +124,10 @@
                             </td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
-                                <button class="btn btn-sm btn-primary me-2" @onclick="SaveEdit" disabled="@(!IsFormValid())">Save</button>
-                                <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())">Save</button>
+                                    <button class="btn btn-sm btn-secondary" @onclick="CancelEdit">Cancel</button>
+                                </div>
                             </td>
                         }
                         else
@@ -138,18 +141,98 @@
                             <td>@quote.Status</td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
-                                <!-- TODO: Add Edit and Delete buttons -->
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)"> Edit</button>
-                                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => ConfirmDelete(quote.Id, quote.CustomerName)">Delete</button>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(quote.Id, quote.CustomerName)">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
                             </td>
-                            
                         }
-
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+</div>
+
+<!-- Mobile Card View -->
+<div class="d-lg-none">
+    @foreach (Quote quote in filteredQuotes)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                @if (editingId == quote.Id)
+                {
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <h6 class="card-title">Editing Quote #@quote.Id</h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer Name</label>
+                            <input class="form-control @(IsCustomerNameValid() ? "" : "is-invalid")" @bind="draft!.CustomerName" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Product Name</label>
+                            <input class="form-control @(IsProductNameValid() ? "" : "is-invalid")" @bind="draft!.ProductName" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Unit Price</label>
+                            <input type="number" step="0.01" class="form-control @(IsUnitPriceValid() ? "" : "is-invalid")" @bind="draft!.UnitPrice" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control @(IsQuantityValid() ? "" : "is-invalid")" @bind="draft!.Quantity" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" @bind="draft!.Status">
+                                <option>Draft</option>
+                                <option>Pending</option>
+                                <option>Approved</option>
+                                <option>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Total Price</label>
+                            <input class="form-control" value="@((draft!.UnitPrice * draft!.Quantity).ToString("C"))" readonly />
+                        </div>
+                        <div class="col-12">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button class="btn btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())">Save</button>
+                                <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="col-8">
+                            <h6 class="card-title">Quote #@quote.Id</h6>
+                            <p class="card-text mb-1"><strong>Customer:</strong> @quote.CustomerName</p>
+                            <p class="card-text mb-1"><strong>Product:</strong> @quote.ProductName</p>
+                            <p class="card-text mb-1"><strong>Price:</strong> @quote.UnitPrice.ToString("C") × @quote.Quantity = @quote.TotalPrice.ToString("C")</p>
+                            <p class="card-text mb-1"><strong>Status:</strong> <span class="badge bg-secondary">@quote.Status</span></p>
+                            <p class="card-text"><small class="text-muted">Created: @quote.CreatedDate.ToString("MM/dd/yyyy")</small></p>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(quote.Id, quote.CustomerName)">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
 
 @code {

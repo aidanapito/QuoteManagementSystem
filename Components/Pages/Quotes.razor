@@ -2,7 +2,9 @@
 @rendermode InteractiveServer
 @using TestApp.Models
 @using TestApp.Services
+@using Microsoft.AspNetCore.Components.Forms
 @inject QuoteService QuoteService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Quotes</PageTitle>
 
@@ -52,12 +54,21 @@
             <button class="btn btn-outline-secondary" @onclick="ToggleAdvancedFilters" title="Advanced Filters">
                 <i class="bi bi-funnel"></i> <span class="d-none d-xxl-inline">Filters</span>
             </button>
+            <button class="btn btn-info" @onclick="ExportToCsv" title="Export to CSV">
+                <i class="bi bi-download"></i> <span class="d-none d-xxl-inline">Export</span>
+            </button>
+            <button class="btn btn-warning" @onclick="TriggerFileInput" title="Import from CSV">
+                <i class="bi bi-upload"></i> <span class="d-none d-xxl-inline">Import</span>
+            </button>
             <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
                 <i class="bi bi-plus-circle"></i> <span class="d-none d-xxl-inline">Add Quote</span>
             </button>
         </div>
     </div>
 </div>
+
+<!-- Hidden file input for CSV import -->
+<input type="file" @ref="fileInputRef" @onchange="OnFileSelected" accept=".csv" style="display: none;" />
 
 <!-- Advanced Filters Panel -->
 @if (showAdvancedFilters)
@@ -1178,5 +1189,65 @@
     {
         return IsNewCustomerNameValid() && IsNewProductNameValid() && 
                IsNewUnitPriceValid() && IsNewQuantityValid();
+    }
+
+    // CSV Import/Export functionality
+    private ElementReference fileInputRef;
+
+    private async Task TriggerFileInput()
+    {
+        await JSRuntime.InvokeVoidAsync("triggerFileInput", fileInputRef);
+    }
+
+    private async Task ExportToCsv()
+    {
+        try
+        {
+            var csvContent = QuoteService.ExportToCsv();
+            var fileName = $"quotes_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            
+            // Create and trigger download
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, csvContent);
+        }
+        catch (Exception ex)
+        {
+            // Handle error - you might want to show a toast notification
+            Console.WriteLine($"Export error: {ex.Message}");
+        }
+    }
+
+    private async Task OnFileSelected(ChangeEventArgs e)
+    {
+        try
+        {
+            var files = e.Value as IBrowserFile[];
+            if (files != null && files.Length > 0)
+            {
+                var file = files[0];
+                if (file.ContentType == "text/csv" || file.Name.EndsWith(".csv"))
+                {
+                    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                    using var reader = new StreamReader(stream);
+                    var csvContent = await reader.ReadToEndAsync();
+                    
+                    var importedCount = QuoteService.ImportFromCsv(csvContent);
+                    
+                    // Refresh the quotes list
+                    quotes = QuoteService.GetAllQuotes();
+                    FilterQuotes();
+                    
+                    // Show success message (you might want to use a toast notification)
+                    Console.WriteLine($"Successfully imported {importedCount} quotes");
+                }
+                else
+                {
+                    Console.WriteLine("Please select a valid CSV file");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Import error: {ex.Message}");
+        }
     }
 }

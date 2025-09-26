@@ -1,4 +1,5 @@
 ﻿using TestApp.Models;
+using System.Text;
 
 namespace TestApp.Services
 {
@@ -63,7 +64,138 @@ namespace TestApp.Services
             _quotes.Add(newQuote);
         }
 
-        // TODO: Implement the following methods
-        // (All methods now implemented)
+        // CSV Export functionality
+        public string ExportToCsv()
+        {
+            var csv = new StringBuilder();
+            
+            // Add header row
+            csv.AppendLine("Id,CustomerName,ProductName,UnitPrice,Quantity,TotalPrice,CreatedDate,ValidQuotePeriod,Status,Comments");
+            
+            // Add data rows
+            foreach (var quote in _quotes)
+            {
+                csv.AppendLine($"{quote.Id}," +
+                              $"\"{EscapeCsvField(quote.CustomerName)}\"," +
+                              $"\"{EscapeCsvField(quote.ProductName)}\"," +
+                              $"{quote.UnitPrice}," +
+                              $"{quote.Quantity}," +
+                              $"{quote.TotalPrice}," +
+                              $"{quote.CreatedDate:yyyy-MM-dd HH:mm:ss}," +
+                              $"{quote.ValidQuotePeriod:yyyy-MM-dd HH:mm:ss}," +
+                              $"\"{EscapeCsvField(quote.Status)}\"," +
+                              $"\"{EscapeCsvField(quote.Comments)}\"");
+            }
+            
+            return csv.ToString();
+        }
+
+        // CSV Import functionality
+        public int ImportFromCsv(string csvContent)
+        {
+            var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length < 2) return 0; // Need at least header + 1 data row
+            
+            var importedCount = 0;
+            var maxId = _quotes.Count > 0 ? _quotes.Max(q => q.Id) : 0;
+            
+            // Skip header row, process data rows
+            for (int i = 1; i < lines.Length; i++)
+            {
+                try
+                {
+                    var fields = ParseCsvLine(lines[i]);
+                    if (fields.Length >= 9) // Ensure we have enough fields
+                    {
+                        var quote = new Quote
+                        {
+                            Id = ++maxId, // Generate new ID
+                            CustomerName = UnescapeCsvField(fields[1]),
+                            ProductName = UnescapeCsvField(fields[2]),
+                            UnitPrice = decimal.Parse(fields[3]),
+                            Quantity = int.Parse(fields[4]),
+                            CreatedDate = DateTime.Parse(fields[6]),
+                            ValidQuotePeriod = DateTime.Parse(fields[7]),
+                            Status = UnescapeCsvField(fields[8]),
+                            Comments = fields.Length > 9 ? UnescapeCsvField(fields[9]) : ""
+                        };
+                        
+                        _quotes.Add(quote);
+                        importedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue processing other rows
+                    Console.WriteLine($"Error importing row {i + 1}: {ex.Message}");
+                }
+            }
+            
+            return importedCount;
+        }
+
+        private string EscapeCsvField(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return "";
+            
+            // Escape quotes by doubling them
+            return field.Replace("\"", "\"\"");
+        }
+
+        private string UnescapeCsvField(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return "";
+            
+            // Remove surrounding quotes if present
+            if (field.StartsWith("\"") && field.EndsWith("\""))
+            {
+                field = field.Substring(1, field.Length - 2);
+            }
+            
+            // Unescape quotes
+            return field.Replace("\"\"", "\"");
+        }
+
+        private string[] ParseCsvLine(string line)
+        {
+            var fields = new List<string>();
+            var currentField = "";
+            var inQuotes = false;
+            
+            for (int i = 0; i < line.Length; i++)
+            {
+                var c = line[i];
+                
+                if (c == '"')
+                {
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        // Escaped quote
+                        currentField += '"';
+                        i++; // Skip next quote
+                    }
+                    else
+                    {
+                        // Toggle quote state
+                        inQuotes = !inQuotes;
+                    }
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    // Field separator
+                    fields.Add(currentField);
+                    currentField = "";
+                }
+                else
+                {
+                    currentField += c;
+                }
+            }
+            
+            // Add the last field
+            fields.Add(currentField);
+            
+            return fields.ToArray();
+        }
     }
 }

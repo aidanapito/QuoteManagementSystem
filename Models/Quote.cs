@@ -10,5 +10,6 @@
         public decimal TotalPrice => UnitPrice * Quantity;
         public DateTime CreatedDate { get; set; }
         public string Status { get; set; } = "Draft";
+        public string Comments { get; set; } = string.Empty;
     }
 }

@@ -145,6 +145,10 @@
                                 <input class="form-control" value="@((newQuote!.UnitPrice * newQuote!.Quantity).ToString("F2"))" readonly />
                             </div>
                         </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Comments</label>
+                            <textarea class="form-control" rows="3" @bind="newQuote!.Comments" placeholder="Add any notes, special instructions, or comments about this quote..."></textarea>
+                        </div>
                     </div>
                     <div class="mt-3">
                         <button class="btn btn-primary me-2" @onclick="SaveNewQuote" disabled="@(!IsNewFormValid())">
@@ -174,6 +178,7 @@
                     <th>Total</th>
                     <th>Status</th>
                     <th>Created</th>
+                    <th>Comments</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -233,6 +238,9 @@
                             </td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
                             <td>
+                                <textarea class="form-control form-control-sm" rows="2" @bind="draft!.Comments" placeholder="Add comments..."></textarea>
+                            </td>
+                            <td>
                                 <div class="btn-group" role="group">
                                     <button class="btn btn-sm btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
                                         <i class="bi bi-check-circle"></i> Save
@@ -253,6 +261,18 @@
                             <td>@quote.TotalPrice.ToString("C")</td>
                             <td>@quote.Status</td>
                             <td>@quote.CreatedDate.ToString("MM/dd/yyyy")</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(quote.Comments))
+                                {
+                                    <span class="text-muted" title="@quote.Comments">
+                                        @(quote.Comments.Length > 50 ? quote.Comments.Substring(0, 50) + "..." : quote.Comments)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No comments</span>
+                                }
+                            </td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <button class="btn btn-sm btn-outline-primary" @onclick="() => BeginEdit(quote)">
@@ -348,6 +368,10 @@
                                 <input class="form-control" value="@((draft!.UnitPrice * draft!.Quantity).ToString("F2"))" readonly />
                             </div>
                         </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Comments</label>
+                            <textarea class="form-control" rows="3" @bind="draft!.Comments" placeholder="Add any notes, special instructions, or comments about this quote..."></textarea>
+                        </div>
                         <div class="col-12">
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                 <button class="btn btn-primary" @onclick="SaveEdit" disabled="@(!IsFormValid())" title="@(IsFormValid() ? "Save changes" : "Fix validation errors to save")">
@@ -369,6 +393,10 @@
                             <p class="card-text mb-1"><strong>Product:</strong> @quote.ProductName</p>
                             <p class="card-text mb-1"><strong>Price:</strong> @quote.UnitPrice.ToString("C") × @quote.Quantity = @quote.TotalPrice.ToString("C")</p>
                             <p class="card-text mb-1"><strong>Status:</strong> <span class="badge bg-secondary">@quote.Status</span></p>
+                            @if (!string.IsNullOrWhiteSpace(quote.Comments))
+                            {
+                                <p class="card-text mb-1"><strong>Comments:</strong> <span class="text-muted">@quote.Comments</span></p>
+                            }
                             <p class="card-text"><small class="text-muted">Created: @quote.CreatedDate.ToString("MM/dd/yyyy")</small></p>
                         </div>
                         <div class="col-4 text-end">
@@ -475,7 +503,8 @@
                 UnitPrice = quote.UnitPrice,
                 Quantity = quote.Quantity,
                 CreatedDate = quote.CreatedDate,
-                Status = quote.Status
+                Status = quote.Status,
+                Comments = quote.Comments
             };
     }
 
@@ -591,7 +620,8 @@
             ProductName = "",
             UnitPrice = 0,
             Quantity = 0,
-            Status = "Draft"
+            Status = "Draft",
+            Comments = ""
         };
     }
 

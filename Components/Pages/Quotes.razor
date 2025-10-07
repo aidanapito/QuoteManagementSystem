@@ -3,6 +3,7 @@
 @using TestApp.Models
 @using TestApp.Services
 @using Microsoft.AspNetCore.Components.Forms
+@using System.Text
 @inject QuoteService QuoteService
 @inject IJSRuntime JSRuntime
 
@@ -94,6 +95,17 @@
 
 <!-- Hidden file input for CSV import -->
 <input type="file" @ref="fileInputRef" @onchange="OnFileSelected" accept=".csv" style="display: none;" />
+
+<!-- Bulk Action Bar -->
+@if (selectedQuoteIds.Count > 0)
+{
+    <BulkActionBar SelectedCount="@selectedQuoteIds.Count"
+                   OnClearSelection="@ClearSelection"
+                   OnStatusUpdate="@BulkUpdateStatusAsync"
+                   OnExport="@BulkExportAsync"
+                   OnDelete="@BulkDeleteAsync"
+                   OnPriceAdjustment="@BulkAdjustPricesAsync" />
+}
 
 <!-- Advanced Filters Panel -->
 @if (showAdvancedFilters)
@@ -333,6 +345,9 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" @bind="selectAllOnPage" @onclick="ToggleSelectAll" />
+                    </th>
                     <th>ID</th>
                     <th>Customer</th>
                     <th>Product</th>
@@ -362,7 +377,15 @@
                 {
                     @foreach (Quote quote in pagedQuotes.Items)
                     {
-                    <tr>
+                    <tr class="@(IsQuoteSelected(quote.Id) ? "table-primary" : "")">
+                        <td>
+                            @if (editingId != quote.Id)
+                            {
+                                <input type="checkbox" class="form-check-input" 
+                                       checked="@IsQuoteSelected(quote.Id)" 
+                                       @onchange="() => ToggleQuoteSelection(quote.Id)" />
+                            }
+                        </td>
                         @if (editingId == quote.Id)
                         {
                             <td>@quote.Id</td>
@@ -498,8 +521,20 @@
     {
         @foreach (Quote quote in pagedQuotes.Items)
         {
-        <div class="card mb-3">
+        <div class="card mb-3 @(IsQuoteSelected(quote.Id) ? "border-primary" : "")">
             <div class="card-body">
+                @if (editingId != quote.Id)
+                {
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" 
+                               checked="@IsQuoteSelected(quote.Id)" 
+                               @onchange="() => ToggleQuoteSelection(quote.Id)" 
+                               id="checkbox-mobile-@quote.Id" />
+                        <label class="form-check-label" for="checkbox-mobile-@quote.Id">
+                            <small class="text-muted">Select this quote</small>
+                        </label>
+                    </div>
+                }
                 @if (editingId == quote.Id)
                 {
                     <div class="row">
@@ -745,6 +780,38 @@
     </div>
 }
 
+<!-- Bulk Delete Confirmation Modal -->
+@if (showBulkDeleteConfirmation)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle"></i> @confirmationTitle
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p>@confirmationMessage</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action cannot be undone. All selected quotes will be permanently deleted from the system.
+                    </div>
+                    <p class="mb-0"><strong>Selected quotes:</strong> @selectedQuoteIds.Count</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelBulkDeleteConfirmation">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmBulkDeleteAsync">
+                        <i class="bi bi-trash"></i> Yes, Delete All Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Delete Confirmation Modal -->
 @if (showDeleteConfirmation)
 {
@@ -807,6 +874,10 @@
     private int currentPage = 1;
     private int pageSize = 25;
     private bool isLoading = false;
+    
+    // Bulk operations
+    private HashSet<int> selectedQuoteIds = new HashSet<int>();
+    private bool selectAllOnPage = false;
     
     // Advanced filter variables
     private bool showAdvancedFilters = false;
@@ -1236,6 +1307,160 @@
             // Handle error - you might want to show a toast notification
             Console.WriteLine($"Export error: {ex.Message}");
         }
+    }
+
+    // Bulk Operations
+    private void ToggleSelectAll()
+    {
+        selectAllOnPage = !selectAllOnPage;
+        if (selectAllOnPage)
+        {
+            foreach (var quote in pagedQuotes.Items)
+            {
+                selectedQuoteIds.Add(quote.Id);
+            }
+        }
+        else
+        {
+            foreach (var quote in pagedQuotes.Items)
+            {
+                selectedQuoteIds.Remove(quote.Id);
+            }
+        }
+    }
+
+    private void ToggleQuoteSelection(int quoteId)
+    {
+        if (selectedQuoteIds.Contains(quoteId))
+        {
+            selectedQuoteIds.Remove(quoteId);
+            selectAllOnPage = false;
+        }
+        else
+        {
+            selectedQuoteIds.Add(quoteId);
+            // Check if all on page are now selected
+            selectAllOnPage = pagedQuotes.Items.All(q => selectedQuoteIds.Contains(q.Id));
+        }
+    }
+
+    private bool IsQuoteSelected(int quoteId)
+    {
+        return selectedQuoteIds.Contains(quoteId);
+    }
+
+    private void ClearSelection()
+    {
+        selectedQuoteIds.Clear();
+        selectAllOnPage = false;
+    }
+
+    private async Task BulkDeleteAsync()
+    {
+        if (selectedQuoteIds.Count == 0) return;
+
+        confirmationTitle = "Confirm Bulk Delete";
+        confirmationMessage = $"Are you sure you want to delete {selectedQuoteIds.Count} selected quote(s)? This action cannot be undone.";
+        showBulkDeleteConfirmation = true;
+    }
+
+    private async Task ConfirmBulkDeleteAsync()
+    {
+        showBulkDeleteConfirmation = false;
+        
+        try
+        {
+            var deletedCount = await QuoteService.BulkDeleteQuotesAsync(selectedQuoteIds.ToList());
+            ClearSelection();
+            await LoadQuotesAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Successfully deleted {deletedCount} quote(s)!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error deleting quotes: {ex.Message}");
+        }
+    }
+
+    private async Task BulkUpdateStatusAsync(string newStatus)
+    {
+        if (selectedQuoteIds.Count == 0) return;
+
+        try
+        {
+            var updatedCount = await QuoteService.BulkUpdateStatusAsync(selectedQuoteIds.ToList(), newStatus);
+            ClearSelection();
+            await LoadQuotesAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Successfully updated status for {updatedCount} quote(s) to {newStatus}!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error updating status: {ex.Message}");
+        }
+    }
+
+    private async Task BulkExportAsync()
+    {
+        if (selectedQuoteIds.Count == 0) return;
+
+        try
+        {
+            var selectedQuotes = await QuoteService.GetQuotesByIdsAsync(selectedQuoteIds.ToList());
+            
+            var csv = new StringBuilder();
+            csv.AppendLine("Id,CustomerName,ProductName,UnitPrice,Quantity,TotalPrice,CreatedDate,ValidQuotePeriod,Status,Comments");
+            
+            foreach (var quote in selectedQuotes)
+            {
+                var customerName = quote.CustomerName.Replace("\"", "\"\"");
+                var productName = quote.ProductName.Replace("\"", "\"\"");
+                var status = quote.Status.Replace("\"", "\"\"");
+                var comments = quote.Comments.Replace("\"", "\"\"");
+                
+                csv.AppendLine($"{quote.Id}," +
+                              $"\"{customerName}\"," +
+                              $"\"{productName}\"," +
+                              $"{quote.UnitPrice}," +
+                              $"{quote.Quantity}," +
+                              $"{quote.TotalPrice}," +
+                              $"{quote.CreatedDate:yyyy-MM-dd HH:mm:ss}," +
+                              $"{quote.ValidQuotePeriod:yyyy-MM-dd HH:mm:ss}," +
+                              $"\"{status}\"," +
+                              $"\"{comments}\"");
+            }
+            
+            var fileName = $"quotes_selected_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, csv.ToString());
+            await JSRuntime.InvokeVoidAsync("alert", $"Successfully exported {selectedQuotes.Count} quote(s)!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error exporting quotes: {ex.Message}");
+        }
+    }
+
+    private async Task BulkAdjustPricesAsync(decimal percentage)
+    {
+        if (selectedQuoteIds.Count == 0) return;
+
+        try
+        {
+            var updatedCount = await QuoteService.BulkUpdatePricesAsync(selectedQuoteIds.ToList(), percentage);
+            ClearSelection();
+            await LoadQuotesAsync();
+            await JSRuntime.InvokeVoidAsync("alert", $"Successfully adjusted prices for {updatedCount} quote(s) by {percentage:+0.##;-0.##}%!");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error adjusting prices: {ex.Message}");
+        }
+    }
+
+    // Bulk delete confirmation
+    private bool showBulkDeleteConfirmation = false;
+    
+    private void CancelBulkDeleteConfirmation()
+    {
+        showBulkDeleteConfirmation = false;
     }
 
 }

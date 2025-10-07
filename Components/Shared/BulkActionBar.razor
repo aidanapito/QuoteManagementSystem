@@ -1,0 +1,139 @@
+@using TestApp.Models
+
+<div class="card border-primary mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-square-fill text-primary fs-5"></i>
+                <strong>@SelectedCount selected</strong>
+                @if (SelectedCount > 0)
+                {
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="OnClearSelection">
+                        <i class="bi bi-x"></i> Clear
+                    </button>
+                }
+            </div>
+            
+            @if (SelectedCount > 0)
+            {
+                <div class="d-flex gap-2 flex-wrap">
+                    <!-- Bulk Status Update -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-arrow-repeat"></i> Update Status
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" @onclick='() => OnStatusUpdate.InvokeAsync("Draft")'>
+                                <i class="bi bi-pencil-square"></i> Draft
+                            </a></li>
+                            <li><a class="dropdown-item" @onclick='() => OnStatusUpdate.InvokeAsync("Pending")'>
+                                <i class="bi bi-clock"></i> Pending
+                            </a></li>
+                            <li><a class="dropdown-item" @onclick='() => OnStatusUpdate.InvokeAsync("Approved")'>
+                                <i class="bi bi-check-circle"></i> Approved
+                            </a></li>
+                            <li><a class="dropdown-item" @onclick='() => OnStatusUpdate.InvokeAsync("Rejected")'>
+                                <i class="bi bi-x-circle"></i> Rejected
+                            </a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Bulk Price Adjustment -->
+                    <button class="btn btn-sm btn-outline-info" @onclick="ShowPriceAdjustment">
+                        <i class="bi bi-calculator"></i> Adjust Prices
+                    </button>
+                    
+                    <!-- Bulk Export -->
+                    <button class="btn btn-sm btn-outline-success" @onclick="OnExport">
+                        <i class="bi bi-download"></i> Export Selected
+                    </button>
+                    
+                    <!-- Bulk Delete -->
+                    <button class="btn btn-sm btn-outline-danger" @onclick="OnDelete">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Price Adjustment Modal -->
+@if (showPriceAdjustmentModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-calculator text-info"></i> Adjust Prices for @SelectedCount Quotes
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="HidePriceAdjustment"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Adjustment Percentage</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" class="form-control" @bind="priceAdjustmentPercentage" placeholder="e.g., 10 for +10%, -5 for -5%" />
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">
+                            Positive values increase prices, negative values decrease them.
+                            <br />Example: 10% increase on $100 = $110
+                        </small>
+                    </div>
+                    
+                    @if (priceAdjustmentPercentage != 0)
+                    {
+                        <div class="alert alert-info">
+                            <strong>Preview:</strong> Prices will be adjusted by 
+                            <strong>@(priceAdjustmentPercentage > 0 ? "+" : "")@priceAdjustmentPercentage%</strong>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HidePriceAdjustment">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-info" @onclick="ConfirmPriceAdjustment" disabled="@(priceAdjustmentPercentage == 0)">
+                        <i class="bi bi-check-circle"></i> Apply Adjustment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int SelectedCount { get; set; }
+    [Parameter] public EventCallback OnClearSelection { get; set; }
+    [Parameter] public EventCallback<string> OnStatusUpdate { get; set; }
+    [Parameter] public EventCallback OnExport { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback<decimal> OnPriceAdjustment { get; set; }
+    
+    private bool showPriceAdjustmentModal = false;
+    private decimal priceAdjustmentPercentage = 0;
+    
+    private void ShowPriceAdjustment()
+    {
+        priceAdjustmentPercentage = 0;
+        showPriceAdjustmentModal = true;
+    }
+    
+    private void HidePriceAdjustment()
+    {
+        showPriceAdjustmentModal = false;
+        priceAdjustmentPercentage = 0;
+    }
+    
+    private async Task ConfirmPriceAdjustment()
+    {
+        if (priceAdjustmentPercentage != 0)
+        {
+            await OnPriceAdjustment.InvokeAsync(priceAdjustmentPercentage);
+            HidePriceAdjustment();
+        }
+    }
+}
+

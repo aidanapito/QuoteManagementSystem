@@ -220,6 +220,42 @@ namespace TestApp.Services
             }
         }
 
+        // Bulk Operations
+        public async Task<int> BulkDeleteQuotesAsync(List<int> ids)
+        {
+            var quotesToDelete = await _context.Quotes.Where(q => ids.Contains(q.Id)).ToListAsync();
+            _context.Quotes.RemoveRange(quotesToDelete);
+            await _context.SaveChangesAsync();
+            return quotesToDelete.Count;
+        }
+
+        public async Task<int> BulkUpdateStatusAsync(List<int> ids, string newStatus)
+        {
+            var quotesToUpdate = await _context.Quotes.Where(q => ids.Contains(q.Id)).ToListAsync();
+            foreach (var quote in quotesToUpdate)
+            {
+                quote.Status = newStatus;
+            }
+            await _context.SaveChangesAsync();
+            return quotesToUpdate.Count;
+        }
+
+        public async Task<List<Quote>> GetQuotesByIdsAsync(List<int> ids)
+        {
+            return await _context.Quotes.Where(q => ids.Contains(q.Id)).ToListAsync();
+        }
+
+        public async Task<int> BulkUpdatePricesAsync(List<int> ids, decimal adjustmentPercentage)
+        {
+            var quotesToUpdate = await _context.Quotes.Where(q => ids.Contains(q.Id)).ToListAsync();
+            foreach (var quote in quotesToUpdate)
+            {
+                quote.UnitPrice = quote.UnitPrice * (1 + adjustmentPercentage / 100);
+            }
+            await _context.SaveChangesAsync();
+            return quotesToUpdate.Count;
+        }
+
         public async Task AddQuoteAsync(Quote newQuote)
         {
             newQuote.CreatedDate = DateTime.Now;

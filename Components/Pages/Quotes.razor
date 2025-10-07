@@ -24,9 +24,9 @@
                             </span>
                             <input type="text" class="form-control" placeholder="Search by customer, product, or status..." 
                                    @bind="SearchTerm" @bind:event="oninput" />
-                            @if (!string.IsNullOrEmpty(searchTerm))
+                            @if (!string.IsNullOrEmpty(SearchTerm))
                             {
-                                <button class="btn btn-outline-danger" type="button" @onclick="ClearSearch" title="Clear search">
+                                <button class="btn btn-outline-danger" type="button" @onclick="ClearSearchAsync" title="Clear search">
                                     <i class="bi bi-x-circle-fill"></i> <span class="d-none d-sm-inline">Clear</span>
                                 </button>
                             }
@@ -71,7 +71,7 @@
                             
                             <!-- Right side - Action buttons -->
                             <div class="d-flex gap-2 flex-wrap">
-                                <button class="btn btn-outline-info btn-sm" @onclick="ExportToCsv" title="Export to CSV">
+                                <button class="btn btn-outline-info btn-sm" @onclick="ExportToCsvAsync" title="Export to CSV">
                                     <i class="bi bi-download"></i> 
                                     <span class="d-none d-sm-inline ms-1">Export</span>
                                 </button>
@@ -103,7 +103,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="mb-0"><i class="bi bi-funnel-fill"></i> Advanced Filters</h6>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearAllFilters" title="Clear all filters">
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="ClearAllFiltersAsync" title="Clear all filters">
                         <i class="bi bi-x-circle"></i> Clear All
                     </button>
                 </div>
@@ -111,7 +111,7 @@
                     <div class="row">
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Customer</label>
-                            <select class="form-select" @bind="filterCustomer" @bind:event="onchange">
+                            <select class="form-select" @bind="filter.Customer" @bind:event="onchange">
                                 <option value="">All Customers</option>
                                 @foreach (var customer in GetUniqueCustomers())
                                 {
@@ -121,7 +121,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Product</label>
-                            <select class="form-select" @bind="filterProduct" @bind:event="onchange">
+                            <select class="form-select" @bind="filter.Product" @bind:event="onchange">
                                 <option value="">All Products</option>
                                 @foreach (var product in GetUniqueProducts())
                                 {
@@ -131,7 +131,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Status</label>
-                            <select class="form-select" @bind="filterStatus" @bind:event="onchange">
+                            <select class="form-select" @bind="filter.Status" @bind:event="onchange">
                                 <option value="">All Statuses</option>
                                 <option value="Draft">Draft</option>
                                 <option value="Pending">Pending</option>
@@ -141,7 +141,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Date Range</label>
-                            <select class="form-select" @bind="dateRangeFilter" @bind:event="onchange">
+                            <select class="form-select" @bind="filter.DateRangeFilter" @bind:event="onchange">
                                 <option value="all">All Dates</option>
                                 <option value="today">Today</option>
                                 <option value="week">This Week</option>
@@ -152,16 +152,16 @@
                             </select>
                         </div>
                     </div>
-                    @if (dateRangeFilter == "custom")
+                    @if (filter.DateRangeFilter == "custom")
                     {
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">From Date</label>
-                                <input type="date" class="form-control" @bind="customStartDate" @bind:event="onchange" />
+                                <input type="date" class="form-control" @bind="filter.CustomStartDate" @bind:event="onchange" />
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">To Date</label>
-                                <input type="date" class="form-control" @bind="customEndDate" @bind:event="onchange" />
+                                <input type="date" class="form-control" @bind="filter.CustomEndDate" @bind:event="onchange" />
                             </div>
                         </div>
                     }
@@ -170,10 +170,10 @@
                             <label class="form-label">Price Range</label>
                             <div class="row">
                                 <div class="col-6">
-                                    <input type="number" step="0.01" class="form-control" @bind="minPrice" @bind:event="oninput" placeholder="Min $" />
+                                    <input type="number" step="0.01" class="form-control" @bind="filter.MinPrice" @bind:event="oninput" placeholder="Min $" />
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" step="0.01" class="form-control" @bind="maxPrice" @bind:event="oninput" placeholder="Max $" />
+                                    <input type="number" step="0.01" class="form-control" @bind="filter.MaxPrice" @bind:event="oninput" placeholder="Max $" />
                                 </div>
                             </div>
                         </div>
@@ -181,10 +181,10 @@
                             <label class="form-label">Quantity Range</label>
                             <div class="row">
                                 <div class="col-6">
-                                    <input type="number" class="form-control" @bind="minQuantity" @bind:event="oninput" placeholder="Min Qty" />
+                                    <input type="number" class="form-control" @bind="filter.MinQuantity" @bind:event="oninput" placeholder="Min Qty" />
                                 </div>
                                 <div class="col-6">
-                                    <input type="number" class="form-control" @bind="maxQuantity" @bind:event="oninput" placeholder="Max Qty" />
+                                    <input type="number" class="form-control" @bind="filter.MaxQuantity" @bind:event="oninput" placeholder="Max Qty" />
                                 </div>
                             </div>
                         </div>
@@ -193,13 +193,13 @@
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    Showing @filteredQuotes.Count of @quotes.Count quotes
+                                    Showing @pagedQuotes.Items.Count of @pagedQuotes.TotalCount quotes
                                     @if (HasActiveFilters())
                                     {
                                         <span class="badge bg-primary ms-2">Filtered</span>
                                     }
                                 </small>
-                                <button class="btn btn-primary btn-sm" @onclick="ApplyFilters">
+                                <button class="btn btn-primary btn-sm" @onclick="ApplyFiltersAsync">
                                     <i class="bi bi-search"></i> Apply Filters
                                 </button>
                             </div>
@@ -347,8 +347,21 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (Quote quote in filteredQuotes)
+                @if (isLoading)
                 {
+                    <tr>
+                        <td colspan="11" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-2">Loading quotes...</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (Quote quote in pagedQuotes.Items)
+                    {
                     <tr>
                         @if (editingId == quote.Id)
                         {
@@ -463,6 +476,7 @@
                             </td>
                         }
                     </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -471,8 +485,19 @@
 
 <!-- Mobile Card View -->
 <div class="d-lg-none">
-    @foreach (Quote quote in filteredQuotes)
+    @if (isLoading)
     {
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading quotes...</p>
+        </div>
+    }
+    else
+    {
+        @foreach (Quote quote in pagedQuotes.Items)
+        {
         <div class="card mb-3">
             <div class="card-body">
                 @if (editingId == quote.Id)
@@ -607,8 +632,26 @@
                 }
             </div>
         </div>
+        }
     }
 </div>
+
+<!-- Pagination -->
+@if (pagedQuotes.TotalPages > 1 || isLoading)
+{
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <Pagination Model="pagedQuotes" 
+                               OnPageChanged="OnPageChangedAsync" 
+                               OnPageSizeChanged="OnPageSizeChangedAsync" 
+                               ShowPageSizeSelector="true" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Save Confirmation Modal -->
 @if (showSaveConfirmation)
@@ -647,7 +690,7 @@
                     <button type="button" class="btn btn-secondary" @onclick="CancelSaveConfirmation">
                         <i class="bi bi-x-circle"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-primary" @onclick="ConfirmSaveEdit">
+                    <button type="button" class="btn btn-primary" @onclick="ConfirmSaveEditAsync">
                         <i class="bi bi-check-circle"></i> Yes, Save Changes
                     </button>
                 </div>
@@ -693,7 +736,7 @@
                     <button type="button" class="btn btn-secondary" @onclick="CancelNewQuoteConfirmation">
                         <i class="bi bi-x-circle"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-success" @onclick="ConfirmSaveNewQuote">
+                    <button type="button" class="btn btn-success" @onclick="ConfirmSaveNewQuoteAsync">
                         <i class="bi bi-check-circle"></i> Yes, Create Quote
                     </button>
                 </div>
@@ -745,7 +788,7 @@
                     <button type="button" class="btn btn-secondary" @onclick="CancelDeleteConfirmation">
                         <i class="bi bi-x-circle"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteQuote">
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDeleteQuoteAsync">
                         <i class="bi bi-trash"></i> Yes, Delete Quote
                     </button>
                 </div>
@@ -755,27 +798,18 @@
 }
 
 @code {
-    private List<Quote> quotes = new List<Quote>();
+    private PagedResult<Quote> pagedQuotes = new PagedResult<Quote>();
     private int? editingId;
     private Quote? draft;
     private bool isAddingNew = false;
     private Quote? newQuote;
-    private string searchTerm = "";
-    private string sortBy = "id-asc";  //default value
-    private List<Quote> filteredQuotes = new List<Quote>();
+    private QuoteFilter filter = new QuoteFilter();
+    private int currentPage = 1;
+    private int pageSize = 25;
+    private bool isLoading = false;
     
     // Advanced filter variables
     private bool showAdvancedFilters = false;
-    private string filterCustomer = "";
-    private string filterProduct = "";
-    private string filterStatus = "";
-    private string dateRangeFilter = "all";
-    private DateTime? customStartDate;
-    private DateTime? customEndDate;
-    private decimal? minPrice;
-    private decimal? maxPrice;
-    private int? minQuantity;
-    private int? maxQuantity;
     
     // Confirmation dialog variables
     private bool showSaveConfirmation = false;
@@ -787,139 +821,64 @@
 
     private string SearchTerm
     {
-        get => searchTerm;
+        get => filter.SearchTerm ?? "";
         set
         {
-            searchTerm = value;
-            FilterQuotes();
+            filter.SearchTerm = value;
+            currentPage = 1; // Reset to first page when searching
+            LoadQuotesAsync();
         }
     }
 
     private string SortBy
     {
-        get => sortBy;
+        get => filter.SortBy;
         set
         {
-            sortBy = value;
-            FilterQuotes();
+            filter.SortBy = value;
+            LoadQuotesAsync();
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        quotes = QuoteService.GetAllQuotes();
-        FilterQuotes();
+        await LoadQuotesAsync();
     }
 
-    private void FilterQuotes()
+    private async Task LoadQuotesAsync()
     {
-        // Start with all quotes
-        filteredQuotes = quotes.ToList();
-
-        // Apply search term filter
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        if (isLoading) return;
+        
+        isLoading = true;
+        try
         {
-            var term = searchTerm.ToLowerInvariant();
-            filteredQuotes = filteredQuotes.Where(q => 
-                q.CustomerName.ToLowerInvariant().Contains(term) ||
-                q.ProductName.ToLowerInvariant().Contains(term) ||
-                q.Status.ToLowerInvariant().Contains(term) ||
-                q.Comments.ToLowerInvariant().Contains(term)
-            ).ToList();
+            pagedQuotes = await QuoteService.GetQuotesFilteredAsync(filter, currentPage, pageSize);
         }
-
-        // Apply advanced filters
-        if (!string.IsNullOrWhiteSpace(filterCustomer))
+        finally
         {
-            filteredQuotes = filteredQuotes.Where(q => q.CustomerName == filterCustomer).ToList();
+            isLoading = false;
         }
-
-        if (!string.IsNullOrWhiteSpace(filterProduct))
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.ProductName == filterProduct).ToList();
-        }
-
-        if (!string.IsNullOrWhiteSpace(filterStatus))
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.Status == filterStatus).ToList();
-        }
-
-        // Apply date range filter
-        if (dateRangeFilter != "all")
-        {
-            var now = DateTime.Now;
-            var startDate = dateRangeFilter switch
-            {
-                "today" => now.Date,
-                "week" => now.Date.AddDays(-(int)now.DayOfWeek),
-                "month" => new DateTime(now.Year, now.Month, 1),
-                "quarter" => new DateTime(now.Year, (now.Month - 1) / 3 * 3 + 1, 1),
-                "year" => new DateTime(now.Year, 1, 1),
-                "custom" when customStartDate.HasValue => customStartDate.Value.Date,
-                _ => DateTime.MinValue
-            };
-
-            var endDate = dateRangeFilter switch
-            {
-                "today" => now.Date.AddDays(1).AddTicks(-1),
-                "week" => now.Date.AddDays(7 - (int)now.DayOfWeek).AddDays(1).AddTicks(-1),
-                "month" => new DateTime(now.Year, now.Month, 1).AddMonths(1).AddTicks(-1),
-                "quarter" => new DateTime(now.Year, (now.Month - 1) / 3 * 3 + 1, 1).AddMonths(3).AddTicks(-1),
-                "year" => new DateTime(now.Year + 1, 1, 1).AddTicks(-1),
-                "custom" when customEndDate.HasValue => customEndDate.Value.Date.AddDays(1).AddTicks(-1),
-                _ => DateTime.MaxValue
-            };
-
-            filteredQuotes = filteredQuotes.Where(q => q.CreatedDate >= startDate && q.CreatedDate <= endDate).ToList();
-        }
-
-        // Apply price range filter
-        if (minPrice.HasValue)
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.TotalPrice >= minPrice.Value).ToList();
-        }
-
-        if (maxPrice.HasValue)
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.TotalPrice <= maxPrice.Value).ToList();
-        }
-
-        // Apply quantity range filter
-        if (minQuantity.HasValue)
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.Quantity >= minQuantity.Value).ToList();
-        }
-
-        if (maxQuantity.HasValue)
-        {
-            filteredQuotes = filteredQuotes.Where(q => q.Quantity <= maxQuantity.Value).ToList();
-        }
-
-        // Apply sorting
-        filteredQuotes = sortBy switch
-        {
-            "id-asc" => filteredQuotes.OrderBy(q => q.Id).ToList(),
-            "id-desc" => filteredQuotes.OrderByDescending(q => q.Id).ToList(),
-            "date-desc" => filteredQuotes.OrderByDescending(q => q.CreatedDate).ToList(),
-            "date-asc" => filteredQuotes.OrderBy(q => q.CreatedDate).ToList(),
-            "customer-asc" => filteredQuotes.OrderBy(q => q.CustomerName).ToList(),
-            "customer-desc" => filteredQuotes.OrderByDescending(q => q.CustomerName).ToList(),
-            "product-asc" => filteredQuotes.OrderBy(q => q.ProductName).ToList(),
-            "product-desc" => filteredQuotes.OrderByDescending(q => q.ProductName).ToList(),
-            "total-desc" => filteredQuotes.OrderByDescending(q => q.TotalPrice).ToList(),
-            "total-asc" => filteredQuotes.OrderBy(q => q.TotalPrice).ToList(),
-            "status-asc" => filteredQuotes.OrderBy(q => q.Status).ToList(),
-            "status-desc" => filteredQuotes.OrderByDescending(q => q.Status).ToList(),
-            "valid-desc" => filteredQuotes.OrderByDescending(q => q.ValidQuotePeriod).ToList(),
-            "valid-asc" => filteredQuotes.OrderBy(q => q.ValidQuotePeriod).ToList(),
-            _ => filteredQuotes.OrderBy(q => q.Id).ToList()
-        };
+        StateHasChanged();
     }
 
-    private void ClearSearch()
+    private async Task OnPageChangedAsync(int page)
     {
-        searchTerm = "";
-        FilterQuotes();
+        currentPage = page;
+        await LoadQuotesAsync();
+    }
+
+    private async Task OnPageSizeChangedAsync(int newPageSize)
+    {
+        pageSize = newPageSize;
+        currentPage = 1; // Reset to first page when changing page size
+        await LoadQuotesAsync();
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        filter.SearchTerm = "";
+        currentPage = 1;
+        await LoadQuotesAsync();
     }
 
     private void ToggleAdvancedFilters()
@@ -927,46 +886,32 @@
         showAdvancedFilters = !showAdvancedFilters;
     }
 
-    private void ClearAllFilters()
+    private async Task ClearAllFiltersAsync()
     {
-        filterCustomer = "";
-        filterProduct = "";
-        filterStatus = "";
-        dateRangeFilter = "all";
-        customStartDate = null;
-        customEndDate = null;
-        minPrice = null;
-        maxPrice = null;
-        minQuantity = null;
-        maxQuantity = null;
-        FilterQuotes();
+        filter = new QuoteFilter();
+        currentPage = 1;
+        await LoadQuotesAsync();
     }
 
-    private void ApplyFilters()
+    private async Task ApplyFiltersAsync()
     {
-        FilterQuotes();
+        currentPage = 1;
+        await LoadQuotesAsync();
     }
 
     private bool HasActiveFilters()
     {
-        return !string.IsNullOrWhiteSpace(filterCustomer) ||
-               !string.IsNullOrWhiteSpace(filterProduct) ||
-               !string.IsNullOrWhiteSpace(filterStatus) ||
-               dateRangeFilter != "all" ||
-               minPrice.HasValue ||
-               maxPrice.HasValue ||
-               minQuantity.HasValue ||
-               maxQuantity.HasValue;
+        return filter.HasActiveFilters();
     }
 
     private List<string> GetUniqueCustomers()
     {
-        return quotes.Select(q => q.CustomerName).Distinct().OrderBy(c => c).ToList();
+        return pagedQuotes.Items.Select(q => q.CustomerName).Distinct().OrderBy(c => c).ToList();
     }
 
     private List<string> GetUniqueProducts()
     {
-        return quotes.Select(q => q.ProductName).Distinct().OrderBy(p => p).ToList();
+        return pagedQuotes.Items.Select(q => q.ProductName).Distinct().OrderBy(p => p).ToList();
     }
 
     // Confirmation dialog methods
@@ -974,7 +919,7 @@
     {
         if (draft != null && editingId.HasValue)
         {
-            var originalQuote = quotes.FirstOrDefault(q => q.Id == editingId.Value);
+            var originalQuote = pagedQuotes.Items.FirstOrDefault(q => q.Id == editingId.Value);
             if (originalQuote != null)
             {
                 confirmationTitle = "Confirm Save Changes";
@@ -1008,16 +953,16 @@
         confirmationTitle = "";
     }
 
-    private void ConfirmSaveEdit()
+    private async Task ConfirmSaveEditAsync()
     {
         showSaveConfirmation = false;
-        SaveEdit(); // Call the original save method
+        await SaveEditAsync(); // Call the async save method
     }
 
-    private void ConfirmSaveNewQuote()
+    private async Task ConfirmSaveNewQuoteAsync()
     {
         showNewQuoteConfirmation = false;
-        SaveNewQuote(); // Call the original save method
+        await SaveNewQuoteAsync(); // Call the async save method
     }
 
     private void CancelDeleteConfirmation()
@@ -1028,12 +973,12 @@
         confirmationTitle = "";
     }
 
-    private void ConfirmDeleteQuote()
+    private async Task ConfirmDeleteQuoteAsync()
     {
         if (quoteToDelete != null)
         {
             showDeleteConfirmation = false;
-            DeleteQuote(quoteToDelete.Id);
+            await DeleteQuoteAsync(quoteToDelete.Id);
             quoteToDelete = null;
         }
     }
@@ -1062,7 +1007,7 @@
         draft = null;
     }
 
-    private void SaveEdit()
+    private async Task SaveEditAsync()
     {
         if (editingId is null || draft is null) return;
 
@@ -1073,11 +1018,10 @@
         }
 
         // Persist changes using the service
-        QuoteService.UpdateQuote(draft);
+        await QuoteService.UpdateQuoteAsync(draft);
         
-        // Refresh the local quotes list to reflect changes
-        quotes = QuoteService.GetAllQuotes();
-        FilterQuotes();
+        // Refresh the quotes list to reflect changes
+        await LoadQuotesAsync();
 
         CancelEdit();
     }
@@ -1133,7 +1077,7 @@
 
     private void ConfirmDelete(int id, string customerName)
     {
-        quoteToDelete = quotes.FirstOrDefault(q => q.Id == id);
+        quoteToDelete = pagedQuotes.Items.FirstOrDefault(q => q.Id == id);
         if (quoteToDelete != null)
         {
             confirmationTitle = "Confirm Delete Quote";
@@ -1142,14 +1086,13 @@
         }
     }
 
-    private void DeleteQuote(int id)
+    private async Task DeleteQuoteAsync(int id)
     {
         // Delete from service
-        QuoteService.DeleteQuote(id);
+        await QuoteService.DeleteQuoteAsync(id);
         
-        // Refresh the local quotes list to reflect changes
-        quotes = QuoteService.GetAllQuotes();
-        FilterQuotes();
+        // Refresh the quotes list to reflect changes
+        await LoadQuotesAsync();
         
         // If we were editing this quote, cancel edit mode
         if (editingId == id)
@@ -1179,13 +1122,12 @@
         newQuote = null;
     }
 
-    private void SaveNewQuote()
+    private async Task SaveNewQuoteAsync()
     {
         if (newQuote == null || !IsNewFormValid()) return;
 
-        QuoteService.AddQuote(newQuote);
-        quotes = QuoteService.GetAllQuotes();
-        FilterQuotes();
+        await QuoteService.AddQuoteAsync(newQuote);
+        await LoadQuotesAsync();
         CancelAddNew();
     }
 
@@ -1247,11 +1189,10 @@
                     Console.WriteLine($"CSV content length: {csvContent.Length}");
                     Console.WriteLine($"First 200 chars: {csvContent.Substring(0, Math.Min(200, csvContent.Length))}");
                     
-                    var importedCount = QuoteService.ImportFromCsv(csvContent);
+                    var importedCount = await QuoteService.ImportFromCsvAsync(csvContent);
                     
                     // Refresh the quotes list
-                    quotes = QuoteService.GetAllQuotes();
-                    FilterQuotes();
+                    await LoadQuotesAsync();
                     
                     // Show success message using JavaScript alert
                     if (importedCount > 0)
@@ -1280,11 +1221,11 @@
         }
     }
 
-    private async Task ExportToCsv()
+    private async Task ExportToCsvAsync()
     {
         try
         {
-            var csvContent = QuoteService.ExportToCsv();
+            var csvContent = await QuoteService.ExportToCsvAsync();
             var fileName = $"quotes_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
             
             // Create and trigger download
@@ -1298,3 +1239,4 @@
     }
 
 }
+

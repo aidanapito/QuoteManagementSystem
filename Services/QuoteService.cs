@@ -19,6 +19,174 @@ namespace TestApp.Services
             return await _context.Quotes.ToListAsync();
         }
 
+        public async Task<PagedResult<Quote>> GetQuotesPagedAsync(int pageNumber, int pageSize, string? searchTerm = null, string? sortBy = null)
+        {
+            var query = _context.Quotes.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var term = searchTerm.ToLowerInvariant();
+                query = query.Where(q => 
+                    q.CustomerName.ToLowerInvariant().Contains(term) ||
+                    q.ProductName.ToLowerInvariant().Contains(term) ||
+                    q.Status.ToLowerInvariant().Contains(term) ||
+                    q.Comments.ToLowerInvariant().Contains(term)
+                );
+            }
+
+            // Apply sorting
+            query = sortBy switch
+            {
+                "id-asc" => query.OrderBy(q => q.Id),
+                "id-desc" => query.OrderByDescending(q => q.Id),
+                "date-desc" => query.OrderByDescending(q => q.CreatedDate),
+                "date-asc" => query.OrderBy(q => q.CreatedDate),
+                "customer-asc" => query.OrderBy(q => q.CustomerName),
+                "customer-desc" => query.OrderByDescending(q => q.CustomerName),
+                "product-asc" => query.OrderBy(q => q.ProductName),
+                "product-desc" => query.OrderByDescending(q => q.ProductName),
+                "total-desc" => query.OrderByDescending(q => q.UnitPrice * q.Quantity),
+                "total-asc" => query.OrderBy(q => q.UnitPrice * q.Quantity),
+                "status-asc" => query.OrderBy(q => q.Status),
+                "status-desc" => query.OrderByDescending(q => q.Status),
+                "valid-desc" => query.OrderByDescending(q => q.ValidQuotePeriod),
+                "valid-asc" => query.OrderBy(q => q.ValidQuotePeriod),
+                _ => query.OrderBy(q => q.Id)
+            };
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<Quote>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+        }
+
+        public async Task<PagedResult<Quote>> GetQuotesFilteredAsync(QuoteFilter filter, int pageNumber, int pageSize)
+        {
+            var query = _context.Quotes.AsQueryable();
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+            {
+                var term = filter.SearchTerm.ToLowerInvariant();
+                query = query.Where(q => 
+                    q.CustomerName.ToLowerInvariant().Contains(term) ||
+                    q.ProductName.ToLowerInvariant().Contains(term) ||
+                    q.Status.ToLowerInvariant().Contains(term) ||
+                    q.Comments.ToLowerInvariant().Contains(term)
+                );
+            }
+
+            // Apply advanced filters
+            if (!string.IsNullOrWhiteSpace(filter.Customer))
+            {
+                query = query.Where(q => q.CustomerName == filter.Customer);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Product))
+            {
+                query = query.Where(q => q.ProductName == filter.Product);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Status))
+            {
+                query = query.Where(q => q.Status == filter.Status);
+            }
+
+            // Apply date range filter
+            if (filter.DateRangeFilter != "all")
+            {
+                var now = DateTime.Now;
+                var (startDate, endDate) = GetDateRange(filter.DateRangeFilter, now, filter.CustomStartDate, filter.CustomEndDate);
+                
+                if (startDate != DateTime.MinValue && endDate != DateTime.MaxValue)
+                {
+                    query = query.Where(q => q.CreatedDate >= startDate && q.CreatedDate <= endDate);
+                }
+            }
+
+            // Apply price range filter
+            if (filter.MinPrice.HasValue)
+            {
+                query = query.Where(q => (q.UnitPrice * q.Quantity) >= filter.MinPrice.Value);
+            }
+
+            if (filter.MaxPrice.HasValue)
+            {
+                query = query.Where(q => (q.UnitPrice * q.Quantity) <= filter.MaxPrice.Value);
+            }
+
+            // Apply quantity range filter
+            if (filter.MinQuantity.HasValue)
+            {
+                query = query.Where(q => q.Quantity >= filter.MinQuantity.Value);
+            }
+
+            if (filter.MaxQuantity.HasValue)
+            {
+                query = query.Where(q => q.Quantity <= filter.MaxQuantity.Value);
+            }
+
+            // Apply sorting
+            query = filter.SortBy switch
+            {
+                "id-asc" => query.OrderBy(q => q.Id),
+                "id-desc" => query.OrderByDescending(q => q.Id),
+                "date-desc" => query.OrderByDescending(q => q.CreatedDate),
+                "date-asc" => query.OrderBy(q => q.CreatedDate),
+                "customer-asc" => query.OrderBy(q => q.CustomerName),
+                "customer-desc" => query.OrderByDescending(q => q.CustomerName),
+                "product-asc" => query.OrderBy(q => q.ProductName),
+                "product-desc" => query.OrderByDescending(q => q.ProductName),
+                "total-desc" => query.OrderByDescending(q => q.UnitPrice * q.Quantity),
+                "total-asc" => query.OrderBy(q => q.UnitPrice * q.Quantity),
+                "status-asc" => query.OrderBy(q => q.Status),
+                "status-desc" => query.OrderByDescending(q => q.Status),
+                "valid-desc" => query.OrderByDescending(q => q.ValidQuotePeriod),
+                "valid-asc" => query.OrderBy(q => q.ValidQuotePeriod),
+                _ => query.OrderBy(q => q.Id)
+            };
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResult<Quote>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+        }
+
+        private static (DateTime startDate, DateTime endDate) GetDateRange(string dateRangeFilter, DateTime now, DateTime? customStartDate, DateTime? customEndDate)
+        {
+            return dateRangeFilter switch
+            {
+                "today" => (now.Date, now.Date.AddDays(1).AddTicks(-1)),
+                "week" => (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(7 - (int)now.DayOfWeek).AddDays(1).AddTicks(-1)),
+                "month" => (new DateTime(now.Year, now.Month, 1), new DateTime(now.Year, now.Month, 1).AddMonths(1).AddTicks(-1)),
+                "quarter" => (new DateTime(now.Year, (now.Month - 1) / 3 * 3 + 1, 1), new DateTime(now.Year, (now.Month - 1) / 3 * 3 + 1, 1).AddMonths(3).AddTicks(-1)),
+                "year" => (new DateTime(now.Year, 1, 1), new DateTime(now.Year + 1, 1, 1).AddTicks(-1)),
+                "custom" when customStartDate.HasValue && customEndDate.HasValue => (customStartDate.Value.Date, customEndDate.Value.Date.AddDays(1).AddTicks(-1)),
+                _ => (DateTime.MinValue, DateTime.MaxValue)
+            };
+        }
+
         public async Task<Quote?> GetQuoteByIdAsync(int id)
         {
             return await _context.Quotes.FirstOrDefaultAsync(q => q.Id == id);

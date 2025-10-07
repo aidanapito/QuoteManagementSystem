@@ -1,0 +1,103 @@
+@using TestApp.Models
+@using TestApp.Services
+@inject QuoteService QuoteService
+
+@if (Quote == null)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-2">Loading quote details...</p>
+    </div>
+}
+else
+{
+    <div class="quote-details">
+        <!-- Quote Header -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h5 class="mb-1">Quote #@Quote.Id</h5>
+                <p class="text-muted mb-0">Created: @Quote.CreatedDate.ToString("MM/dd/yyyy")</p>
+            </div>
+            <span class="badge bg-secondary">@Quote.Status</span>
+        </div>
+
+        <!-- Quote Details -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <strong>Customer:</strong>
+                    <span class="ms-2">@Quote.CustomerName</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Product:</strong>
+                    <span class="ms-2">@Quote.ProductName</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Unit Price:</strong>
+                    <span class="ms-2">@Quote.UnitPrice.ToString("C")</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <strong>Quantity:</strong>
+                    <span class="ms-2">@Quote.Quantity</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Total Price:</strong>
+                    <span class="ms-2 fw-bold">@Quote.TotalPrice.ToString("C")</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Valid Until:</strong>
+                    @{
+                        var daysUntilExpiry = (Quote.ValidQuotePeriod - DateTime.Now).Days;
+                        var isExpired = Quote.ValidQuotePeriod < DateTime.Now;
+                        var isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
+                    }
+                    <span class="ms-2 @(isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-success")" 
+                          title="@(isExpired ? "Expired" : isExpiringSoon ? "Expires soon" : "Valid")">
+                        @Quote.ValidQuotePeriod.ToString("MM/dd/yyyy")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Quote.Comments))
+        {
+            <div class="mb-3">
+                <strong>Comments:</strong>
+                <p class="ms-2 text-muted">@Quote.Comments</p>
+            </div>
+        }
+
+        <!-- Actions -->
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-sm btn-outline-primary" @onclick="() => OnEdit.InvokeAsync(Quote)">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-outline-danger" @onclick="() => OnDelete.InvokeAsync((Quote.Id, Quote.CustomerName))">
+                <i class="bi bi-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Quote? Quote { get; set; }
+    [Parameter] public EventCallback<Quote> OnEdit { get; set; }
+    [Parameter] public EventCallback<(int id, string customerName)> OnDelete { get; set; }
+    
+    private bool _isLoading = false;
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Quote == null && !_isLoading)
+        {
+            _isLoading = true;
+            // This component can be used to lazy load individual quotes if needed
+            // For now, it just displays the provided quote
+            _isLoading = false;
+        }
+    }
+}

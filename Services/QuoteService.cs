@@ -1,31 +1,32 @@
 ﻿using TestApp.Models;
+using TestApp.Data;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestApp.Services
 {
     public class QuoteService
     {
-        private static List<Quote> _quotes = new List<Quote>
-        {
-            new Quote { Id = 1, CustomerName = "Acme Corp", ProductName = "Widget A", UnitPrice = 25.00m, Quantity = 10, CreatedDate = DateTime.Now.AddDays(-5), ValidQuotePeriod = DateTime.Now.AddDays(5), Status = "Draft", Comments = "Customer requested rush delivery" },
-            new Quote { Id = 2, CustomerName = "Tech Solutions", ProductName = "Widget B", UnitPrice = 45.50m, Quantity = 5, CreatedDate = DateTime.Now.AddDays(-3), ValidQuotePeriod = DateTime.Now.AddDays(27), Status = "Pending", Comments = "" },
-            new Quote { Id = 3, CustomerName = "Global Industries", ProductName = "Widget C", UnitPrice = 15.75m, Quantity = 20, CreatedDate = DateTime.Now.AddDays(-1), ValidQuotePeriod = DateTime.Now.AddDays(29), Status = "Approved", Comments = "" },
-            new Quote { Id = 4, CustomerName = "StartUp Inc", ProductName = "Widget D", UnitPrice = 35.25m, Quantity = 8, CreatedDate = DateTime.Now.AddDays(-2), ValidQuotePeriod = DateTime.Now.AddDays(-1), Status = "Draft", Comments = "" }
-        };
+        private readonly ApplicationDbContext _context;
 
-        public List<Quote> GetAllQuotes()
+        public QuoteService(ApplicationDbContext context)
         {
-            return _quotes;
+            _context = context;
         }
 
-        public Quote? GetQuoteById(int id)
+        public async Task<List<Quote>> GetAllQuotesAsync()
         {
-            return _quotes.FirstOrDefault(q => q.Id == id);
+            return await _context.Quotes.ToListAsync();
         }
 
-        public void UpdateQuote(Quote updatedQuote)
+        public async Task<Quote?> GetQuoteByIdAsync(int id)
         {
-            var existingQuote = _quotes.FirstOrDefault(q => q.Id == updatedQuote.Id);
+            return await _context.Quotes.FirstOrDefaultAsync(q => q.Id == id);
+        }
+
+        public async Task UpdateQuoteAsync(Quote updatedQuote)
+        {
+            var existingQuote = await _context.Quotes.FirstOrDefaultAsync(q => q.Id == updatedQuote.Id);
             if (existingQuote != null)
             {
                 existingQuote.CustomerName = updatedQuote.CustomerName;
@@ -36,23 +37,23 @@ namespace TestApp.Services
                 existingQuote.Status = updatedQuote.Status;
                 existingQuote.Comments = updatedQuote.Comments;
                 // Note: CreatedDate and Id are not updated to maintain data integrity
+                
+                await _context.SaveChangesAsync();
             }
         }
 
-        public void DeleteQuote(int id)
+        public async Task DeleteQuoteAsync(int id)
         {
-            var quoteToRemove = _quotes.FirstOrDefault(q => q.Id == id);
+            var quoteToRemove = await _context.Quotes.FirstOrDefaultAsync(q => q.Id == id);
             if (quoteToRemove != null)
             {
-                _quotes.Remove(quoteToRemove);
+                _context.Quotes.Remove(quoteToRemove);
+                await _context.SaveChangesAsync();
             }
         }
 
-        public void AddQuote(Quote newQuote)
+        public async Task AddQuoteAsync(Quote newQuote)
         {
-            // Generate next available ID
-            var maxId = _quotes.Count > 0 ? _quotes.Max(q => q.Id) : 0;
-            newQuote.Id = maxId + 1;
             newQuote.CreatedDate = DateTime.Now;
             
             // Set default ValidQuotePeriod to 30 days from creation if not set
@@ -61,19 +62,47 @@ namespace TestApp.Services
                 newQuote.ValidQuotePeriod = DateTime.Now.AddDays(30);
             }
             
-            _quotes.Add(newQuote);
+            _context.Quotes.Add(newQuote);
+            await _context.SaveChangesAsync();
+        }
+
+        // Synchronous methods for backward compatibility (will be deprecated)
+        public List<Quote> GetAllQuotes()
+        {
+            return GetAllQuotesAsync().Result;
+        }
+
+        public Quote? GetQuoteById(int id)
+        {
+            return GetQuoteByIdAsync(id).Result;
+        }
+
+        public void UpdateQuote(Quote updatedQuote)
+        {
+            UpdateQuoteAsync(updatedQuote).Wait();
+        }
+
+        public void DeleteQuote(int id)
+        {
+            DeleteQuoteAsync(id).Wait();
+        }
+
+        public void AddQuote(Quote newQuote)
+        {
+            AddQuoteAsync(newQuote).Wait();
         }
 
         // CSV Export functionality
-        public string ExportToCsv()
+        public async Task<string> ExportToCsvAsync()
         {
+            var quotes = await GetAllQuotesAsync();
             var csv = new StringBuilder();
             
             // Add header row
             csv.AppendLine("Id,CustomerName,ProductName,UnitPrice,Quantity,TotalPrice,CreatedDate,ValidQuotePeriod,Status,Comments");
             
             // Add data rows
-            foreach (var quote in _quotes)
+            foreach (var quote in quotes)
             {
                 csv.AppendLine($"{quote.Id}," +
                               $"\"{EscapeCsvField(quote.CustomerName)}\"," +
@@ -91,13 +120,13 @@ namespace TestApp.Services
         }
 
         // CSV Import functionality
-        public int ImportFromCsv(string csvContent)
+        public async Task<int> ImportFromCsvAsync(string csvContent)
         {
             var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             if (lines.Length < 2) return 0; // Need at least header + 1 data row
             
             var importedCount = 0;
-            var maxId = _quotes.Count > 0 ? _quotes.Max(q => q.Id) : 0;
+            var quotes = new List<Quote>();
             
             // Skip header row, process data rows
             for (int i = 1; i < lines.Length; i++)
@@ -109,7 +138,6 @@ namespace TestApp.Services
                     {
                         var quote = new Quote
                         {
-                            Id = ++maxId, // Generate new ID
                             CustomerName = UnescapeCsvField(fields[1]),
                             ProductName = UnescapeCsvField(fields[2]),
                             UnitPrice = decimal.Parse(fields[3]),
@@ -120,7 +148,7 @@ namespace TestApp.Services
                             Comments = fields.Length > 9 ? UnescapeCsvField(fields[9]) : ""
                         };
                         
-                        _quotes.Add(quote);
+                        quotes.Add(quote);
                         importedCount++;
                     }
                 }
@@ -131,7 +159,25 @@ namespace TestApp.Services
                 }
             }
             
+            // Add all quotes to database in one transaction
+            if (quotes.Any())
+            {
+                _context.Quotes.AddRange(quotes);
+                await _context.SaveChangesAsync();
+            }
+            
             return importedCount;
+        }
+
+        // Synchronous CSV methods for backward compatibility
+        public string ExportToCsv()
+        {
+            return ExportToCsvAsync().Result;
+        }
+
+        public int ImportFromCsv(string csvContent)
+        {
+            return ImportFromCsvAsync(csvContent).Result;
         }
 
         private DateTime ParseDateTime(string dateString)

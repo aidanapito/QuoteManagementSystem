@@ -38,7 +38,12 @@
         };
 
         window.triggerFileInput = (element) => {
-            element.click();
+            console.log('triggerFileInput called');
+            if (element) {
+                element.click();
+            } else {
+                console.log('Element is null');
+            }
         };
     </script>
 </body>

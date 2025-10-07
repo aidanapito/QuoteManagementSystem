@@ -114,8 +114,8 @@ namespace TestApp.Services
                             ProductName = UnescapeCsvField(fields[2]),
                             UnitPrice = decimal.Parse(fields[3]),
                             Quantity = int.Parse(fields[4]),
-                            CreatedDate = DateTime.Parse(fields[6]),
-                            ValidQuotePeriod = DateTime.Parse(fields[7]),
+                            CreatedDate = ParseDateTime(fields[6]),
+                            ValidQuotePeriod = ParseDateTime(fields[7]),
                             Status = UnescapeCsvField(fields[8]),
                             Comments = fields.Length > 9 ? UnescapeCsvField(fields[9]) : ""
                         };
@@ -132,6 +132,38 @@ namespace TestApp.Services
             }
             
             return importedCount;
+        }
+
+        private DateTime ParseDateTime(string dateString)
+        {
+            if (string.IsNullOrEmpty(dateString))
+                return DateTime.Now;
+
+            // Try multiple date formats
+            string[] formats = {
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd",
+                "MM/dd/yyyy HH:mm:ss",
+                "MM/dd/yyyy",
+                "dd/MM/yyyy HH:mm:ss",
+                "dd/MM/yyyy",
+                "yyyy/MM/dd HH:mm:ss",
+                "yyyy/MM/dd"
+            };
+
+            if (DateTime.TryParseExact(dateString, formats, null, System.Globalization.DateTimeStyles.None, out DateTime result))
+            {
+                return result;
+            }
+
+            // Fallback to standard parsing
+            if (DateTime.TryParse(dateString, out result))
+            {
+                return result;
+            }
+
+            // If all else fails, return current date
+            return DateTime.Now;
         }
 
         private string EscapeCsvField(string field)

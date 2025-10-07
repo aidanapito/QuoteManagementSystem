@@ -1,22 +1,96 @@
-/* Ensure buttons match input-group height */
-.btn-group-custom {
-    height: calc(1.5rem + 0.75rem + 2px); /* Match Bootstrap input-group height */
+/* Improved button styling for better readability */
+.btn-sm {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
 }
 
-.btn-group-custom .btn {
-    height: 100%;
-    min-width: auto;
-    padding: 0.375rem 0.75rem;
-    white-space: nowrap;
-    overflow: hidden;
+.btn-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Ensure icon-only buttons have proper sizing */
-.btn-group-custom .btn i {
-    margin-right: 0.25rem;
+.btn-sm:active {
+    transform: translateY(0);
 }
 
-.btn-group-custom .btn span {
-    margin-left: 0.25rem;
+/* Icon spacing */
+.btn-sm i {
+    font-size: 0.9rem;
+}
+
+/* Responsive button text */
+@media (max-width: 576px) {
+    .btn-sm {
+        padding: 0.5rem;
+        min-width: 2.5rem;
+    }
+    
+    .btn-sm span {
+        display: none !important;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .btn-sm {
+        padding: 0.5rem 0.6rem;
+    }
+}
+
+/* Card styling for the search section */
+.card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.card-body {
+    background-color: #f8f9fa;
+}
+
+/* Input group improvements */
+.input-group .form-control {
+    border-radius: 0.375rem;
+}
+
+.input-group .input-group-text {
+    background-color: #fff;
+    border-color: #ced4da;
+}
+
+/* Button color improvements */
+.btn-outline-info {
+    color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+.btn-outline-info:hover {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+    color: #fff;
+}
+
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
 }
 

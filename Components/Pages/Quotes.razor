@@ -10,59 +10,84 @@
 
 <h1>Quote Management</h1>
 
+<!-- Search and Filter Section -->
 <div class="row mb-3">
-    <div class="col-lg-8 col-md-6 mb-2 mb-md-0">
-        <div class="input-group">
-            <span class="input-group-text">
-                <i class="bi bi-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="Search by customer, product, or status..." 
-                   @bind="SearchTerm" @bind:event="oninput" />
-            @if (!string.IsNullOrEmpty(searchTerm))
-            {
-                <button class="btn btn-outline-danger" type="button" @onclick="ClearSearch" title="Clear search">
-                    <i class="bi bi-x-circle-fill"></i> <span class="d-none d-sm-inline">Clear</span>
-                </button>
-            }
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-3 mb-2 mb-md-0">
-        <div class="input-group">
-            <span class="input-group-text">
-                <i class="bi bi-sort-down"></i>
-            </span>
-            <select class="form-select" @bind="SortBy" @bind:event="onchange">
-                <option value="id-asc">ID (Low to High)</option>
-                <option value="id-desc">ID (High to Low)</option>
-                <option value="date-desc">Date (Newest First)</option>
-                <option value="date-asc">Date (Oldest First)</option>
-                <option value="customer-asc">Customer (A-Z)</option>
-                <option value="customer-desc">Customer (Z-A)</option>
-                <option value="product-asc">Product (A-Z)</option>
-                <option value="product-desc">Product (Z-A)</option>
-                <option value="total-desc">Total (High to Low)</option>
-                <option value="total-asc">Total (Low to High)</option>
-                <option value="status-asc">Status (A-Z)</option>
-                <option value="status-desc">Status (Z-A)</option>
-                <option value="valid-desc">Valid Until (Latest First)</option>
-                <option value="valid-asc">Valid Until (Earliest First)</option>
-            </select>
-        </div>
-    </div>
-    <div class="col-lg-2 col-md-3 text-md-end">
-        <div class="d-flex gap-2 justify-content-md-end btn-group-custom">
-            <button class="btn btn-outline-secondary" @onclick="ToggleAdvancedFilters" title="Advanced Filters">
-                <i class="bi bi-funnel"></i> <span class="d-none d-xxl-inline">Filters</span>
-            </button>
-            <button class="btn btn-info" @onclick="ExportToCsv" title="Export to CSV">
-                <i class="bi bi-download"></i> <span class="d-none d-xxl-inline">Export</span>
-            </button>
-            <button class="btn btn-warning" @onclick="TriggerFileInput" title="Import from CSV">
-                <i class="bi bi-upload"></i> <span class="d-none d-xxl-inline">Import</span>
-            </button>
-            <button class="btn btn-success" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
-                <i class="bi bi-plus-circle"></i> <span class="d-none d-xxl-inline">Add Quote</span>
-            </button>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body p-3">
+                <!-- Search Row -->
+                <div class="row mb-3">
+                    <div class="col-lg-8 col-md-12 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" placeholder="Search by customer, product, or status..." 
+                                   @bind="SearchTerm" @bind:event="oninput" />
+                            @if (!string.IsNullOrEmpty(searchTerm))
+                            {
+                                <button class="btn btn-outline-danger" type="button" @onclick="ClearSearch" title="Clear search">
+                                    <i class="bi bi-x-circle-fill"></i> <span class="d-none d-sm-inline">Clear</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-12">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-sort-down"></i>
+                            </span>
+                            <select class="form-select" @bind="SortBy" @bind:event="onchange">
+                                <option value="id-asc">ID (Low to High)</option>
+                                <option value="id-desc">ID (High to Low)</option>
+                                <option value="date-desc">Date (Newest First)</option>
+                                <option value="date-asc">Date (Oldest First)</option>
+                                <option value="customer-asc">Customer (A-Z)</option>
+                                <option value="customer-desc">Customer (Z-A)</option>
+                                <option value="product-asc">Product (A-Z)</option>
+                                <option value="product-desc">Product (Z-A)</option>
+                                <option value="total-desc">Total (High to Low)</option>
+                                <option value="total-asc">Total (Low to High)</option>
+                                <option value="status-asc">Status (A-Z)</option>
+                                <option value="status-desc">Status (Z-A)</option>
+                                <option value="valid-desc">Valid Until (Latest First)</option>
+                                <option value="valid-asc">Valid Until (Earliest First)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons Row -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                            <!-- Left side - Filter button -->
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="ToggleAdvancedFilters" title="Advanced Filters">
+                                    <i class="bi bi-funnel"></i> 
+                                    <span class="d-none d-sm-inline ms-1">Filters</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Right side - Action buttons -->
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-outline-info btn-sm" @onclick="ExportToCsv" title="Export to CSV">
+                                    <i class="bi bi-download"></i> 
+                                    <span class="d-none d-sm-inline ms-1">Export</span>
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" @onclick="TriggerFileInput" title="Import from CSV">
+                                    <i class="bi bi-upload"></i> 
+                                    <span class="d-none d-sm-inline ms-1">Import</span>
+                                </button>
+                                <button class="btn btn-success btn-sm" @onclick="BeginAddNew" disabled="@(isAddingNew || editingId.HasValue)">
+                                    <i class="bi bi-plus-circle"></i> 
+                                    <span class="d-none d-sm-inline ms-1">Add Quote</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1196,7 +1221,63 @@
 
     private async Task TriggerFileInput()
     {
+        Console.WriteLine("TriggerFileInput called");
         await JSRuntime.InvokeVoidAsync("triggerFileInput", fileInputRef);
+    }
+
+    private async Task OnFileSelected(ChangeEventArgs e)
+    {
+        try
+        {
+            Console.WriteLine("OnFileSelected called");
+            var files = e.Value as IBrowserFile[];
+            Console.WriteLine($"Files array: {files?.Length ?? 0}");
+            
+            if (files != null && files.Length > 0)
+            {
+                var file = files[0];
+                Console.WriteLine($"File selected: {file.Name}, ContentType: {file.ContentType}, Size: {file.Size}");
+                
+                if (file.ContentType == "text/csv" || file.Name.EndsWith(".csv"))
+                {
+                    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+                    using var reader = new StreamReader(stream);
+                    var csvContent = await reader.ReadToEndAsync();
+                    
+                    Console.WriteLine($"CSV content length: {csvContent.Length}");
+                    Console.WriteLine($"First 200 chars: {csvContent.Substring(0, Math.Min(200, csvContent.Length))}");
+                    
+                    var importedCount = QuoteService.ImportFromCsv(csvContent);
+                    
+                    // Refresh the quotes list
+                    quotes = QuoteService.GetAllQuotes();
+                    FilterQuotes();
+                    
+                    // Show success message using JavaScript alert
+                    if (importedCount > 0)
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", $"Successfully imported {importedCount} quotes!");
+                    }
+                    else
+                    {
+                        await JSRuntime.InvokeVoidAsync("alert", "No quotes were imported. Please check your CSV file format.");
+                    }
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Please select a valid CSV file.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No files selected");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Import error: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Import error: {ex.Message}");
+        }
     }
 
     private async Task ExportToCsv()
@@ -1216,38 +1297,4 @@
         }
     }
 
-    private async Task OnFileSelected(ChangeEventArgs e)
-    {
-        try
-        {
-            var files = e.Value as IBrowserFile[];
-            if (files != null && files.Length > 0)
-            {
-                var file = files[0];
-                if (file.ContentType == "text/csv" || file.Name.EndsWith(".csv"))
-                {
-                    using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
-                    using var reader = new StreamReader(stream);
-                    var csvContent = await reader.ReadToEndAsync();
-                    
-                    var importedCount = QuoteService.ImportFromCsv(csvContent);
-                    
-                    // Refresh the quotes list
-                    quotes = QuoteService.GetAllQuotes();
-                    FilterQuotes();
-                    
-                    // Show success message (you might want to use a toast notification)
-                    Console.WriteLine($"Successfully imported {importedCount} quotes");
-                }
-                else
-                {
-                    Console.WriteLine("Please select a valid CSV file");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Import error: {ex.Message}");
-        }
-    }
 }

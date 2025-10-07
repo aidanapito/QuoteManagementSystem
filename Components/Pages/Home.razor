@@ -1,0 +1,12 @@
+@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>Quote Management System</PageTitle>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect to Quotes page immediately
+        Navigation.NavigateTo("/quotes");
+    }
+}

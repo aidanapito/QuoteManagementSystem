@@ -1,0 +1,77 @@
+@using TestApp.Models
+@using TestApp.Services
+@using Microsoft.AspNetCore.Components
+@inject UserService UserService
+@inject NavigationManager Navigation
+
+<div class="user-role-section" @onclick:stopPropagation="true">
+    <div class="current-user-info">
+        <button type="button" class="role-switch-btn" @onclick="ToggleRoleSwitcher" @onclick:stopPropagation="true">
+            <i class="bi bi-person-gear"></i>
+            <span class="badge @UserService.GetRoleBadgeClass(currentUser.Role)">
+                @UserService.GetRoleDisplayName(currentUser.Role)
+            </span>
+        </button>
+    </div>
+
+    @if (showRoleSwitcher)
+    {
+        <div class="role-switcher-dropdown" @onclick:stopPropagation="true">
+            <div class="dropdown-header">Switch Role (Demo)</div>
+            @foreach (UserRole role in Enum.GetValues(typeof(UserRole)))
+            {
+                <button class="dropdown-item @(currentUser.Role == role ? "active" : "")" 
+                        @onclick="() => SwitchRole(role)"
+                        @onclick:stopPropagation="true">
+                    <span class="badge @UserService.GetRoleBadgeClass(role) me-2">
+                        @UserService.GetRoleDisplayName(role)
+                    </span>
+                    <small class="text-muted">@GetRoleDescription(role)</small>
+                </button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private User currentUser = new User();
+    private bool showRoleSwitcher = false;
+
+    protected override void OnInitialized()
+    {
+        currentUser = UserService.GetCurrentUser();
+    }
+
+    private void ToggleRoleSwitcher()
+    {
+        Console.WriteLine($"ToggleRoleSwitcher called! Current state: {showRoleSwitcher}");
+        showRoleSwitcher = !showRoleSwitcher;
+        Console.WriteLine($"New state: {showRoleSwitcher}");
+        StateHasChanged();
+    }
+
+    private void SwitchRole(UserRole role)
+    {
+        var user = UserService.GetCurrentUser();
+        user.Role = role;
+        UserService.SetCurrentUser(user);
+        currentUser = user;
+        showRoleSwitcher = false;
+        
+        // Force a page refresh to update all components with new permissions
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    private string GetRoleDescription(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.ViewOnly => "Can only view quotes",
+            UserRole.Sales => "Can create & edit quotes",
+            UserRole.Manager => "Can manage quotes & bulk ops",
+            UserRole.Admin => "Full system access",
+            _ => ""
+        };
+    }
+}
+

@@ -9,7 +9,7 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable">
     <nav class="flex-column">
         <div class="nav-section">
             <div class="nav-section-header">
@@ -17,14 +17,14 @@
             </div>
             
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="quotes">
+                <NavLink class="nav-link" href="quotes" @onclick="CloseMobileMenu">
                     <span class="bi bi-file-earmark-text" aria-hidden="true"></span> 
                     <span>Quotes</span>
                 </NavLink>
             </div>
 
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="analytics">
+                <NavLink class="nav-link" href="analytics" @onclick="CloseMobileMenu">
                     <span class="bi bi-graph-up" aria-hidden="true"></span> 
                     <span>Analytics</span>
                 </NavLink>
@@ -51,6 +51,7 @@
                 </div>
             </div>
         </div>
+
     </nav>
 </div>
 
@@ -86,6 +87,12 @@
             uniqueCustomers = 0;
             totalRevenue = 0;
         }
+    }
+
+    private void CloseMobileMenu()
+    {
+        // This will close the mobile menu on small screens
+        // No-op on desktop
     }
 }
 

@@ -1,0 +1,110 @@
+.user-role-section {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+    position: relative;
+}
+
+.current-user-info {
+    color: #333;
+}
+
+.user-name {
+    display: none; /* Hide name in action bar */
+}
+
+.user-role {
+    font-size: 0.7rem;
+}
+
+.user-role .badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.role-switch-btn {
+    cursor: pointer !important;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: auto;
+    min-height: auto;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.role-switch-btn:hover {
+    background: #e9ecef !important;
+    border-color: #adb5bd !important;
+    color: #212529 !important;
+    transform: none;
+}
+
+.role-switch-btn i {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-right: 0.25rem;
+}
+
+.role-switcher-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 0.25rem;
+    background: white;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.dropdown-header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: none;
+    color: #495057;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.dropdown-item:hover {
+    background: #f8f9fa;
+}
+
+.dropdown-item.active {
+    background: #e3f2fd;
+    border-left: 3px solid #2196f3;
+}
+
+.dropdown-item small {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+

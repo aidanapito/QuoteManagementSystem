@@ -1,6 +1,12 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">TestApp</a>
+        <a class="navbar-brand d-flex align-items-center" href="">
+            <span class="bi bi-file-earmark-text-fill me-2"></span>
+            <span>Quote Manager</span>
+        </a>
+        <div class="navbar-text text-light">
+            <small class="text-muted">v1.0</small>
+        </div>
     </div>
 </div>
 
@@ -8,17 +14,83 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="quotes">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Quotes
-            </NavLink>
+        <div class="nav-section">
+            <div class="nav-section-header">
+                <span class="nav-section-title">Management</span>
+            </div>
+            
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="quotes">
+                    <span class="bi bi-file-earmark-text" aria-hidden="true"></span> 
+                    <span>Quotes</span>
+                    <span class="nav-badge">@totalQuotes</span>
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="analytics">
+                    <span class="bi bi-graph-up" aria-hidden="true"></span> 
+                    <span>Analytics</span>
+                    <span class="nav-badge">@pendingQuotes</span>
+                </NavLink>
+            </div>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="analytics">
-                <span class="bi bi-graph-up" aria-hidden="true"></span> Analytics
-            </NavLink>
+        <div class="nav-section mt-3">
+            <div class="nav-section-header">
+                <span class="nav-section-title">Quick Stats</span>
+            </div>
+            
+            <div class="nav-stats">
+                <div class="nav-stat-item">
+                    <span class="nav-stat-label">Total Revenue:</span>
+                    <span class="nav-stat-value">@totalRevenue.ToString("C0")</span>
+                </div>
+                <div class="nav-stat-item">
+                    <span class="nav-stat-label">Customers:</span>
+                    <span class="nav-stat-value">@uniqueCustomers</span>
+                </div>
+                <div class="nav-stat-item">
+                    <span class="nav-stat-label">Pending:</span>
+                    <span class="nav-stat-value text-warning">@pendingQuotes</span>
+                </div>
+            </div>
         </div>
     </nav>
 </div>
+
+@using TestApp.Services
+@inject QuoteService QuoteService
+
+@code {
+    private int totalQuotes = 0;
+    private int pendingQuotes = 0;
+    private int uniqueCustomers = 0;
+    private decimal totalRevenue = 0;
+
+    protected override void OnInitialized()
+    {
+        LoadStats();
+    }
+
+    private void LoadStats()
+    {
+        try
+        {
+            var quotes = QuoteService.GetAllQuotes();
+            totalQuotes = quotes.Count;
+            pendingQuotes = quotes.Count(q => q.Status == "Pending");
+            uniqueCustomers = quotes.Select(q => q.CustomerName).Distinct().Count();
+            totalRevenue = quotes.Sum(q => q.TotalPrice);
+        }
+        catch
+        {
+            // Handle any errors gracefully
+            totalQuotes = 0;
+            pendingQuotes = 0;
+            uniqueCustomers = 0;
+            totalRevenue = 0;
+        }
+    }
+}
 

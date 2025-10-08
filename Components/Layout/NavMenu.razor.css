@@ -76,10 +76,7 @@
     color: white;
 }
 
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: white;
-}
+/* Removed conflicting hover effect - now handled by .nav-link:hover */
 
 .nav-scrollable {
     display: none;
@@ -128,6 +125,11 @@
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 0.375rem;
     margin: 0.5rem 0.75rem;
+    transition: background-color 0.2s ease;
+}
+
+.nav-stats:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .nav-stat-item {
@@ -136,6 +138,7 @@
     align-items: center;
     padding: 0.25rem 0;
     font-size: 0.8rem;
+    transition: none;
 }
 
 .nav-stat-label {
@@ -151,11 +154,15 @@
 
 .nav-link {
     position: relative;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .nav-link:hover {
-    transform: translateX(2px);
+    background-color: rgba(255,255,255,0.15);
+    color: white;
 }
 
 .nav-link.active .nav-badge {
@@ -166,11 +173,11 @@
 /* Icon adjustments */
 .nav-link .bi {
     margin-right: 0.75rem;
-    transition: transform 0.2s ease;
+    transition: none;
 }
 
 .nav-link:hover .bi {
-    transform: scale(1.1);
+    transform: none;
 }
 
 @media (min-width: 641px) {

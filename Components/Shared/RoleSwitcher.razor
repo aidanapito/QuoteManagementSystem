@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 @inject UserService UserService
 @inject NavigationManager Navigation
+@inject ActivityLogService ActivityLogService
 
 <div class="user-role-section" @onclick:stopPropagation="true">
     <div class="current-user-info">
@@ -50,13 +51,24 @@
         StateHasChanged();
     }
 
-    private void SwitchRole(UserRole role)
+    private async Task SwitchRole(UserRole role)
     {
         var user = UserService.GetCurrentUser();
+        var previousRole = user.Role.ToString();
         user.Role = role;
         UserService.SetCurrentUser(user);
         currentUser = user;
         showRoleSwitcher = false;
+
+        // Log the role change
+        try
+        {
+            await ActivityLogService.LogRoleChangeAsync(previousRole, role.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to log role change: {ex.Message}");
+        }
         
         // Force a page refresh to update all components with new permissions
         Navigation.NavigateTo(Navigation.Uri, forceLoad: true);

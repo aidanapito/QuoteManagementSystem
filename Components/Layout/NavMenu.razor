@@ -29,6 +29,16 @@
                     <span>Analytics</span>
                 </NavLink>
             </div>
+
+            @if (UserService.HasPermission(Permission.ViewActivityLogs))
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="activity-logs" @onclick="CloseMobileMenu">
+                        <span class="bi bi-clock-history" aria-hidden="true"></span> 
+                        <span>Activity Logs</span>
+                    </NavLink>
+                </div>
+            }
         </div>
 
         <div class="nav-section mt-3">
@@ -57,6 +67,7 @@
 
 @using TestApp.Services
 @inject QuoteService QuoteService
+@inject UserService UserService
 
 @code {
     private int totalQuotes = 0;

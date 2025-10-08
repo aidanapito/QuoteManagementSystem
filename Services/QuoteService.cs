@@ -8,10 +8,12 @@ namespace TestApp.Services
     public class QuoteService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ActivityLogService? _activityLogService;
 
-        public QuoteService(ApplicationDbContext context)
+        public QuoteService(ApplicationDbContext context, ActivityLogService? activityLogService = null)
         {
             _context = context;
+            _activityLogService = activityLogService;
         }
 
         public async Task<List<Quote>> GetAllQuotesAsync()
@@ -207,6 +209,12 @@ namespace TestApp.Services
                 // Note: CreatedDate and Id are not updated to maintain data integrity
                 
                 await _context.SaveChangesAsync();
+
+                // Log the activity
+                if (_activityLogService != null)
+                {
+                    await _activityLogService.LogQuoteUpdatedAsync(existingQuote.Id, existingQuote.CustomerName, existingQuote.ProductName);
+                }
             }
         }
 
@@ -215,8 +223,18 @@ namespace TestApp.Services
             var quoteToRemove = await _context.Quotes.FirstOrDefaultAsync(q => q.Id == id);
             if (quoteToRemove != null)
             {
+                var customerName = quoteToRemove.CustomerName;
+                var productName = quoteToRemove.ProductName;
+                var quoteId = quoteToRemove.Id;
+
                 _context.Quotes.Remove(quoteToRemove);
                 await _context.SaveChangesAsync();
+
+                // Log the activity
+                if (_activityLogService != null)
+                {
+                    await _activityLogService.LogQuoteDeletedAsync(quoteId, customerName, productName);
+                }
             }
         }
 
@@ -224,9 +242,17 @@ namespace TestApp.Services
         public async Task<int> BulkDeleteQuotesAsync(List<int> ids)
         {
             var quotesToDelete = await _context.Quotes.Where(q => ids.Contains(q.Id)).ToListAsync();
+            var count = quotesToDelete.Count;
             _context.Quotes.RemoveRange(quotesToDelete);
             await _context.SaveChangesAsync();
-            return quotesToDelete.Count;
+
+            // Log the activity
+            if (_activityLogService != null)
+            {
+                await _activityLogService.LogBulkOperationAsync("Delete", count, $"Deleted {count} quotes with IDs: {string.Join(", ", ids)}");
+            }
+
+            return count;
         }
 
         public async Task<int> BulkUpdateStatusAsync(List<int> ids, string newStatus)
@@ -237,7 +263,15 @@ namespace TestApp.Services
                 quote.Status = newStatus;
             }
             await _context.SaveChangesAsync();
-            return quotesToUpdate.Count;
+            var count = quotesToUpdate.Count;
+
+            // Log the activity
+            if (_activityLogService != null)
+            {
+                await _activityLogService.LogBulkOperationAsync("Status Update", count, $"Updated {count} quotes to status '{newStatus}'");
+            }
+
+            return count;
         }
 
         public async Task<List<Quote>> GetQuotesByIdsAsync(List<int> ids)
@@ -253,7 +287,15 @@ namespace TestApp.Services
                 quote.UnitPrice = quote.UnitPrice * (1 + adjustmentPercentage / 100);
             }
             await _context.SaveChangesAsync();
-            return quotesToUpdate.Count;
+            var count = quotesToUpdate.Count;
+
+            // Log the activity
+            if (_activityLogService != null)
+            {
+                await _activityLogService.LogBulkOperationAsync("Price Adjustment", count, $"Adjusted prices by {adjustmentPercentage}% for {count} quotes");
+            }
+
+            return count;
         }
 
         public async Task AddQuoteAsync(Quote newQuote)
@@ -268,6 +310,12 @@ namespace TestApp.Services
             
             _context.Quotes.Add(newQuote);
             await _context.SaveChangesAsync();
+
+            // Log the activity
+            if (_activityLogService != null)
+            {
+                await _activityLogService.LogQuoteCreatedAsync(newQuote.Id, newQuote.CustomerName, newQuote.ProductName);
+            }
         }
 
         // Synchronous methods for backward compatibility (will be deprecated)

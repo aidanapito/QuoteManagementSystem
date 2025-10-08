@@ -15,6 +15,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddSingleton<UserService>();
+builder.Services.AddScoped<ActivityLogService>();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

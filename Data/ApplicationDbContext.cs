@@ -10,6 +10,7 @@ namespace TestApp.Data
         }
 
         public DbSet<Quote> Quotes { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,46 @@ namespace TestApp.Data
                 
                 entity.Property(e => e.ValidQuotePeriod)
                     .IsRequired();
+            });
+
+            // Configure ActivityLog entity
+            modelBuilder.Entity<ActivityLog>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                
+                entity.Property(e => e.UserName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                
+                entity.Property(e => e.UserRole)
+                    .IsRequired()
+                    .HasMaxLength(50);
+                
+                entity.Property(e => e.Action)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                
+                entity.Property(e => e.Description)
+                    .HasMaxLength(200);
+                
+                entity.Property(e => e.EntityType)
+                    .HasMaxLength(50);
+                
+                entity.Property(e => e.Details)
+                    .HasMaxLength(500);
+                
+                entity.Property(e => e.Timestamp)
+                    .IsRequired();
+                
+                entity.Property(e => e.IpAddress)
+                    .HasMaxLength(45);
+                
+                entity.Property(e => e.UserAgent)
+                    .HasMaxLength(500);
+                
+                entity.HasIndex(e => e.Timestamp);
+                entity.HasIndex(e => e.UserName);
+                entity.HasIndex(e => e.Action);
             });
 
             // Seed initial data with lots of mock quotes

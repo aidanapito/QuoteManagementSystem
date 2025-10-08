@@ -44,6 +44,7 @@ namespace TestApp.Services
                 Permission.DeleteQuotes => userRole >= UserRole.Manager,
                 Permission.BulkOperations => userRole >= UserRole.Manager,
                 Permission.ViewAnalytics => userRole >= UserRole.Sales,
+                Permission.ViewActivityLogs => userRole >= UserRole.Manager,
                 Permission.ManageUsers => userRole >= UserRole.Admin,
                 Permission.ExportData => userRole >= UserRole.Manager,
                 Permission.AdjustPrices => userRole >= UserRole.Manager,
@@ -97,6 +98,7 @@ namespace TestApp.Services
         DeleteQuotes,
         BulkOperations,
         ViewAnalytics,
+        ViewActivityLogs,
         ManageUsers,
         ExportData,
         AdjustPrices

@@ -16,12 +16,16 @@
 }
 
 .top-row {
-    height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+    height: 3rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .navbar-brand {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .bi {
@@ -47,28 +51,30 @@
 }
 
 .nav-item {
-    font-size: 0.9rem;
-    padding-bottom: 0.5rem;
+    font-size: 0.85rem;
+    padding-bottom: 0.25rem;
 }
 
     .nav-item:first-of-type {
-        padding-top: 1rem;
+        padding-top: 0.75rem;
     }
 
     .nav-item:last-of-type {
-        padding-bottom: 1rem;
+        padding-bottom: 0.75rem;
     }
 
     .nav-item ::deep .nav-link {
-        color: #d7d7d7;
+        color: #e0e0e0;
         background: none;
         border: none;
-        border-radius: 4px;
-        height: 3rem;
+        border-radius: 6px;
+        height: 2.5rem;
         display: flex;
         align-items: center;
-        line-height: 3rem;
+        line-height: 2.5rem;
         width: 100%;
+        padding: 0 0.75rem;
+        margin: 0 0.5rem;
     }
 
 .nav-item ::deep a.active {
@@ -87,57 +93,46 @@
 }
 
 /* Enhanced Navbar Styles */
-.navbar-brand {
-    font-weight: 600;
-    font-size: 1.2rem;
-}
-
 .nav-section {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .nav-section-header {
-    padding: 0.5rem 1rem 0.25rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 0.5rem;
+    padding: 0.4rem 1rem 0.2rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0.4rem;
 }
 
 .nav-section-title {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.5);
     letter-spacing: 0.5px;
 }
 
-.nav-badge {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
-    margin-left: auto;
-    font-weight: 500;
-}
+/* Removed nav-badge styles - no longer needed */
 
 .nav-stats {
-    padding: 0.5rem 1rem;
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 0.375rem;
-    margin: 0.5rem 0.75rem;
+    padding: 0.4rem 0.75rem;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 0.5rem;
+    margin: 0.4rem 0.5rem;
     transition: background-color 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .nav-stats:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .nav-stat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.25rem 0;
-    font-size: 0.8rem;
+    padding: 0.2rem 0;
+    font-size: 0.75rem;
     transition: none;
 }
 
@@ -165,10 +160,7 @@
     color: white;
 }
 
-.nav-link.active .nav-badge {
-    background-color: rgba(255, 255, 255, 0.3);
-    color: white;
-}
+/* Removed active badge styles - no longer needed */
 
 /* Icon adjustments */
 .nav-link .bi {
@@ -178,6 +170,11 @@
 
 .nav-link:hover .bi {
     transform: none;
+}
+
+/* Sidebar background */
+.nav-scrollable {
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
 }
 
 @media (min-width: 641px) {
@@ -190,7 +187,7 @@
         display: block;
 
         /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
+        height: calc(100vh - 3rem);
         overflow-y: auto;
     }
 }

@@ -18,10 +18,26 @@
     <Routes />
     <script src="_framework/blazor.web.js"></script>
     <script>
+        window.chartInstances = {};
+
         window.createChart = (canvasId, config) => {
             const ctx = document.getElementById(canvasId);
             if (ctx) {
-                new Chart(ctx, config);
+                // Destroy existing chart if it exists
+                if (window.chartInstances[canvasId]) {
+                    window.chartInstances[canvasId].destroy();
+                }
+                // Create new chart and store instance
+                window.chartInstances[canvasId] = new Chart(ctx, config);
+            }
+        };
+
+        window.destroyAllCharts = () => {
+            for (let canvasId in window.chartInstances) {
+                if (window.chartInstances[canvasId]) {
+                    window.chartInstances[canvasId].destroy();
+                    delete window.chartInstances[canvasId];
+                }
             }
         };
 

@@ -8,7 +8,27 @@
 
 <PageTitle>Analytics Dashboard</PageTitle>
 
-<h1>Quote Analytics Dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Quote Analytics Dashboard</h1>
+    <div class="d-flex gap-2 align-items-center">
+        <label class="text-muted mb-0">Time Frame:</label>
+        <select class="form-select form-select-sm" style="width: auto;" @onchange="OnTimeFrameChanged">
+            <option value="all" selected="@(selectedTimeFrame == "all")">All Time</option>
+            <option value="today" selected="@(selectedTimeFrame == "today")">Today</option>
+            <option value="7days" selected="@(selectedTimeFrame == "7days")">Last 7 Days</option>
+            <option value="30days" selected="@(selectedTimeFrame == "30days")">Last 30 Days</option>
+            <option value="90days" selected="@(selectedTimeFrame == "90days")">Last 90 Days</option>
+            <option value="thisyear" selected="@(selectedTimeFrame == "thisyear")">This Year</option>
+            <option value="custom" selected="@(selectedTimeFrame == "custom")">Custom Range</option>
+        </select>
+        @if (selectedTimeFrame == "custom")
+        {
+            <input type="date" class="form-control form-control-sm" style="width: auto;" @bind="customStartDate" @bind:after="OnCustomDateChangedAsync" />
+            <span class="text-muted">to</span>
+            <input type="date" class="form-control form-control-sm" style="width: auto;" @bind="customEndDate" @bind:after="OnCustomDateChangedAsync" />
+        }
+    </div>
+</div>
 
 <div class="row mb-4">
     <div class="col-12">
@@ -148,18 +168,22 @@
 </div>
 
 @code {
-    private List<Quote> quotes = new List<Quote>();
+    private List<Quote> allQuotes = new List<Quote>();
+    private List<Quote> filteredQuotes = new List<Quote>();
     private int totalQuotes;
     private decimal totalRevenue;
     private int pendingQuotes;
     private int uniqueCustomers;
     private List<MonthlyData> monthlyData = new List<MonthlyData>();
+    
+    private string selectedTimeFrame = "all";
+    private DateTime? customStartDate;
+    private DateTime? customEndDate;
 
     protected override async Task OnInitializedAsync()
     {
-        quotes = QuoteService.GetAllQuotes();
-        CalculateMetrics();
-        GenerateMonthlyData();
+        allQuotes = await QuoteService.GetAllQuotesAsync();
+        ApplyTimeFrameFilter();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -170,17 +194,58 @@
         }
     }
 
+    private void ApplyTimeFrameFilter()
+    {
+        DateTime now = DateTime.Now;
+
+        filteredQuotes = selectedTimeFrame switch
+        {
+            "today" => allQuotes.Where(q => q.CreatedDate.Date == now.Date).ToList(),
+            "7days" => allQuotes.Where(q => q.CreatedDate >= now.AddDays(-7)).ToList(),
+            "30days" => allQuotes.Where(q => q.CreatedDate >= now.AddDays(-30)).ToList(),
+            "90days" => allQuotes.Where(q => q.CreatedDate >= now.AddDays(-90)).ToList(),
+            "thisyear" => allQuotes.Where(q => q.CreatedDate.Year == now.Year).ToList(),
+            "custom" => allQuotes.Where(q => 
+                (!customStartDate.HasValue || q.CreatedDate >= customStartDate.Value) &&
+                (!customEndDate.HasValue || q.CreatedDate <= customEndDate.Value.AddDays(1).AddSeconds(-1))
+            ).ToList(),
+            _ => allQuotes.ToList()
+        };
+
+        CalculateMetrics();
+        GenerateMonthlyData();
+    }
+
+    private async Task OnTimeFrameChanged(ChangeEventArgs e)
+    {
+        selectedTimeFrame = e.Value?.ToString() ?? "all";
+        ApplyTimeFrameFilter();
+        await RefreshCharts();
+    }
+
+    private async Task OnCustomDateChangedAsync()
+    {
+        ApplyTimeFrameFilter();
+        await RefreshCharts();
+    }
+
+    private async Task RefreshCharts()
+    {
+        await JSRuntime.InvokeVoidAsync("destroyAllCharts");
+        await CreateCharts();
+    }
+
     private void CalculateMetrics()
     {
-        totalQuotes = quotes.Count;
-        totalRevenue = quotes.Sum(q => q.TotalPrice);
-        pendingQuotes = quotes.Count(q => q.Status == "Pending");
-        uniqueCustomers = quotes.Select(q => q.CustomerName).Distinct().Count();
+        totalQuotes = filteredQuotes.Count;
+        totalRevenue = filteredQuotes.Sum(q => q.TotalPrice);
+        pendingQuotes = filteredQuotes.Count(q => q.Status == "Pending");
+        uniqueCustomers = filteredQuotes.Select(q => q.CustomerName).Distinct().Count();
     }
 
     private void GenerateMonthlyData()
     {
-        var monthlyGroups = quotes
+        var monthlyGroups = filteredQuotes
             .GroupBy(q => new { q.CreatedDate.Year, q.CreatedDate.Month })
             .OrderBy(g => g.Key.Year)
             .ThenBy(g => g.Key.Month)
@@ -253,7 +318,7 @@
 
     private async Task CreateStatusChart()
     {
-        var statusGroups = quotes.GroupBy(q => q.Status).ToList();
+        var statusGroups = filteredQuotes.GroupBy(q => q.Status).ToList();
         var statusLabels = statusGroups.Select(g => g.Key).ToArray();
         var statusCounts = statusGroups.Select(g => g.Count()).ToArray();
         var colors = new[] { "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0" };
@@ -293,7 +358,7 @@
 
     private async Task CreateCustomerRevenueChart()
     {
-        var customerGroups = quotes
+        var customerGroups = filteredQuotes
             .GroupBy(q => q.CustomerName)
             .Select(g => new { Customer = g.Key, Revenue = g.Sum(q => q.TotalPrice) })
             .OrderByDescending(x => x.Revenue)
@@ -351,7 +416,7 @@
 
     private async Task CreateProductQuantityChart()
     {
-        var productGroups = quotes
+        var productGroups = filteredQuotes
             .GroupBy(q => q.ProductName)
             .Select(g => new { Product = g.Key, Quantity = g.Sum(q => q.Quantity) })
             .OrderByDescending(x => x.Quantity)
